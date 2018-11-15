@@ -71,8 +71,9 @@ def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, beta_val=0, l
         def __init__(self, beta, kappa, max_val=1):
             self.beta = beta
             self.kappa = kappa
+            self.max_val = max_val
         def on_epoch_end(self, *args, **kwargs):
-            if K.get_value(self.beta) <= max_val:
+            if K.get_value(self.beta) <= self.max_val:
                 K.set_value(self.beta, K.get_value(self.beta) + self.kappa)
 
 

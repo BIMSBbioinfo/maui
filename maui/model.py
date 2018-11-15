@@ -89,10 +89,8 @@ class Maui(BaseEstimator):
             will be used to compute validation loss under training
         y:  Not used.
         """
-        x = self._dict2array(X)
-        x_val = self._dict2array(X_validation) if X_validation else x
-        self.fit(x, X_validation=x_val, y=y)
-        return self.transform(x)
+        self.fit(X, X_validation=X_validation, y=y)
+        return self.transform(X)
 
 
     def _validate_X(self, X):
