@@ -1,3 +1,5 @@
+import numpy as np
+import pandas as pd
 from sklearn.base import BaseEstimator
 from .autoencoders_architectures import stacked_vae
 
@@ -37,12 +39,14 @@ class Maui(BaseEstimator):
         ----------
         X:  dict with multi-modal dataframes, containing training data, e.g.
             {'mRNA': df1, 'SNP': df2},
-            df1, df2, etc. are (n_samples, n_features) pandas.DataFrame's.
+            df1, df2, etc. are (n_features, n_samples) pandas.DataFrame's.
             The sample names must match, the feature names need not.
         X_validation: optional, dict with multi-modal dataframes, containing validation data
             will be used to compute validation loss under training
         y:  Not used.
         """
+        x_train = self._dict2array(X)
+        x_test = self._dict2array(X_validation) if X_validation else x_train
         hist, vae, encoder, decoder = stacked_vae(
             x_train, x_test, 
             hidden_dims=self.n_hidden, latent_dim=self.n_latent,
@@ -61,13 +65,14 @@ class Maui(BaseEstimator):
         ----------
         X:  dict with multi-modal dataframes, containing training data, e.g.
             {'mRNA': df1, 'SNP': df2},
-            df1, df2, etc. are (n_samples, n_features) pandas.DataFrame's.
+            df1, df2, etc. are (n_features, n_samples) pandas.DataFrame's.
 
         Returns
         -------
         z:  DataFrame (n_samples, n_latent_factors)
             Latent factors representation of the data X.
         """
+        x = self._dict2array(X)
         return self.encoder.predict(x)
 
     def fit_transform(self, X, y=None, X_validation=None):
@@ -84,8 +89,10 @@ class Maui(BaseEstimator):
             will be used to compute validation loss under training
         y:  Not used.
         """
-        self.fit(X, X_validation=X_validation, y=y)
-        return self.transform(X)
+        x = self._dict2array(X)
+        x_val = self._dict2array(X_validation) if X_validation else x
+        self.fit(x, X_validation=x_val, y=y)
+        return self.transform(x)
 
 
     def _validate_X(self, X):
@@ -93,10 +100,18 @@ class Maui(BaseEstimator):
             raise Exception("X must be a dict")
 
         df1 = X[list(X.keys())[0]]
-        if any(df.index.tolist() != df1.index.tolist() for df in X.values()):
-            raise Exception("All dataframes must have same samples (index)")
+        if any(df.columns.tolist() != df1.columns.tolist() for df in X.values()):
+            raise Exception("All dataframes must have same samples (columns)")
 
-        if any(len(df.columns)==0 for df in X.values()):
+        if any(len(df.index)==0 for df in X.values()):
             raise Exception("One of the DataFrames was empty.")
 
         return True
+
+    def _dict2array(self, X):
+        self._validate_X(X)
+        new_feature_names = [f'{k}: {c}' for k in sorted(X.keys()) for c in X[k].index]
+        sample_names = X[list(X.keys())[0]].columns
+        return pd.DataFrame(np.vstack([X[k] for k in sorted(X.keys())]).T,
+            index=sample_names,
+            columns=new_feature_names)
