@@ -73,7 +73,9 @@ class Maui(BaseEstimator):
             Latent factors representation of the data X.
         """
         x = self._dict2array(X)
-        return self.encoder.predict(x)
+        return pd.DataFrame(self.encoder.predict(x),
+            index=x.index,
+            columns=[f'LF{i}' for i in range(1,self.n_latent+1)])
 
     def fit_transform(self, X, y=None, X_validation=None):
         """Train autoencoder model, and return the latent factor representation
