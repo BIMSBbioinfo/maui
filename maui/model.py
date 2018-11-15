@@ -89,7 +89,14 @@ class Maui(BaseEstimator):
 
 
     def _validate_X(self, X):
-        # TODO
-        # fail if not dict
-        # fail if not samples match
-        # fail if some data type empty
+        if not isinstance(X, dict):
+            raise Exception("X must be a dict")
+
+        df1 = X[list(X.keys())[0]]
+        if any(df.index.tolist() != df1.index.tolist() for df in X.values()):
+            raise Exception("All dataframes must have same samples (index)")
+
+        if any(len(df.columns)==0 for df in X.values()):
+            raise Exception("One of the DataFrames was empty.")
+
+        return True
