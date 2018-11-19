@@ -100,6 +100,7 @@ def test_maui_clusters_picks_optimal_k_by_silhouette():
 def test_maui_clusters_picks_optimal_k_with_custom_scoring():
     scorer = mock.Mock()
     scorer.side_effect = [2,3,1] # the optimal AMI will be given at the second trial
+    scorer.__name__ = 'mock_scorer'
 
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
     maui_model.z = pd.DataFrame(np.random.randn(10,2),

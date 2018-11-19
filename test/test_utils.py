@@ -36,3 +36,21 @@ def test_map_factors_to_features():
 
     assert np.allclose(corrs, expected_corrs)
 
+
+def test_compute_roc():
+    dummy_z = pd.DataFrame(
+        [
+            [0,1,1,1,0,1,1,0,0],
+            [1,0,0,0,0,0,1,1,0],
+            [1,0,1,0,0,0,1,1,0],
+            [1,0,0,1,0,0,1,1,0],
+            [1,0,0,0,1,1,1,1,0],
+            [1,1,1,0,0,0,1,1,1],
+        ],
+        index=[f'sample {i}' for i in range(6)],
+        columns=[f'LF{i}' for i in range(9)]
+    )
+    dummy_y = pd.Series(['a', 'b', 'a', 'c', 'b', 'c'], index=dummy_z.index)
+
+    fpr, tpr = utils.compute_roc(dummy_z, dummy_y, cv_folds=2)
+    assert np.allclose(fpr['a'], [0.  , 0.5 , 0.5 , 0.75, 1.  ])
