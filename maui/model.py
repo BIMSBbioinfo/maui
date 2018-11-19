@@ -44,11 +44,15 @@ class Maui(BaseEstimator):
         X_validation: optional, dict with multi-modal dataframes, containing validation data
             will be used to compute validation loss under training
         y:  Not used.
+
+        Returns
+        -------
+        self : Maui object
         """
-        x_train = self._dict2array(X)
-        x_test = self._dict2array(X_validation) if X_validation else x_train
+        self.x_train = self._dict2array(X)
+        x_test = self._dict2array(X_validation) if X_validation else self.x_train
         hist, vae, encoder, decoder = stacked_vae(
-            x_train, x_test, 
+            self.x_train, x_test,
             hidden_dims=self.n_hidden, latent_dim=self.n_latent,
             batch_size=self.batch_size, epochs=self.epochs)
         self.hist = hist
@@ -90,6 +94,11 @@ class Maui(BaseEstimator):
         X_validation: optional, dict with multi-modal dataframes, containing validation data
             will be used to compute validation loss under training
         y:  Not used.
+
+        Returns
+        -------
+        z:  DataFrame (n_samples, n_latent_factors)
+            Latent factors representation of the data X.
         """
         self.fit(X, X_validation=X_validation, y=y)
         return self.transform(X)
