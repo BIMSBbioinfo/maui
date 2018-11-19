@@ -1,8 +1,10 @@
+import maui.utils
 import numpy as np
 import pandas as pd
+from sklearn.cluster import KMeans
 from sklearn.base import BaseEstimator
 from .autoencoders_architectures import stacked_vae
-import maui.utils
+
 
 class Maui(BaseEstimator):
     """Maui (Multi-omics Autoencoder Integration) model.
@@ -105,6 +107,51 @@ class Maui(BaseEstimator):
         """
         self.fit(X, X_validation=X_validation, y=y)
         return self.transform(X)
+
+    def cluster(self, k=None, optimal_k_method='ami',
+        optimal_k_range=range(3,10), ami_y=None,
+        kmeans_kwargs={'n_init': 1000, 'n_jobs': 2}):
+        """Cluster the samples using k-means based on the latent factors.
+
+        Parameters
+        ----------
+        k:                  optional, the number of clusters to find.
+                            if not given, will attempt to find optimal k.
+        optimal_k_method:   supported methods are 'ami' and 'silhouette'. Otherwise, callable.
+                            if 'ami', will pick K which gives the best AMI
+                            (adjusted mutual information) with external labels.
+                            if 'silhouette' will pick the K which gives the best
+                            mean silhouette coefficient.
+                            if callable, should have signature ``scorer(yhat)``
+                            and return a scalar score.
+        optimal_k_range:    array-like, range of Ks to try to find optimal K among
+        ami_y:              array-like (n_samples), the ground-truth labels to use
+                            when picking K by "best AMI against ground-truth" method.
+        kmeans_kwargs:      optional, kwargs for initialization of sklearn.cluster.KMeans
+
+        Returns
+        -------
+        yhat:   Series (n_samples) cluster labels for each sample
+        """
+        if k is not None:
+            return pd.Series(KMeans(k, **kmeans_kwargs).fit_predict(self.z), index=self.z.index)
+        else:
+            if optimal_k_method == 'ami':
+                from sklearn.metrics import adjusted_mutual_info_score
+                if ami_y is None:
+                    raise Exception("Must provide ``ami_y`` if using 'ami' to select optimal K.")
+                scorer = lambda yhat: adjusted_mutual_info_score(ami_y, yhat)
+            elif optimal_k_method == 'silhouette':
+                from sklearn.metrics import silhouette_score
+                scorer = lambda yhat: silhouette_score(self.z, yhat)
+            else:
+                scorer = optimal_k_method
+            yhats = { k: pd.Series(KMeans(k, **kmeans_kwargs).fit_predict(self.z), index=self.z.index) for k in optimal_k_range }
+            scores = [scorer(yhats[k]) for k in optimal_k_range]
+            self.optimal_k_ = np.array(optimal_k_range)[np.argmax(scores)]
+            self.yhat_ = yhats[self.optimal_k_]
+            return self.yhat_
+
 
 
     def _validate_X(self, X):

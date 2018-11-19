@@ -1,4 +1,6 @@
 import pytest
+from unittest import mock
+
 import numpy as np
 import pandas as pd
 
@@ -52,3 +54,60 @@ def test_maui_saves_feature_correlations():
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
     z = maui_model.fit_transform({'d1': df1, 'd2': df2})
     assert hasattr(maui_model, 'feature_correlations')
+
+def test_maui_clusters_with_single_k():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model.z = pd.DataFrame(np.random.randn(10,2),
+        index=[f'sample {i}' for i in range(10)],
+        columns=['LF1', 'LF2'])
+    maui_model.x = pd.DataFrame(np.random.randn(20,10),
+        index=[f'feature {i}' for i in range(20)],
+        columns=[f'sample {i}' for i in range(10)])
+
+    yhat = maui_model.cluster(5)
+    assert yhat.shape == (10,)
+
+def test_maui_clusters_picks_optimal_k_by_ami():
+    ami_mock = mock.Mock()
+    ami_mock.side_effect = [2,3,1] # the optimal AMI will be given at the second trial
+    with mock.patch('sklearn.metrics.adjusted_mutual_info_score', ami_mock):
+        maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+        maui_model.z = pd.DataFrame(np.random.randn(10,2),
+            index=[f'sample {i}' for i in range(10)],
+            columns=['LF1', 'LF2'])
+        maui_model.x = pd.DataFrame(np.random.randn(20,10),
+            index=[f'feature {i}' for i in range(20)],
+            columns=[f'sample {i}' for i in range(10)])
+        maui_model.cluster(ami_y=np.arange(10), optimal_k_range=[1,2,3]) # the second trial is k=2
+
+        assert maui_model.optimal_k_ == 2
+
+def test_maui_clusters_picks_optimal_k_by_silhouette():
+    silhouette_mock = mock.Mock()
+    silhouette_mock.side_effect = [2,3,1] # the optimal silhouette will be given at the second trial
+    with mock.patch('sklearn.metrics.silhouette_score', silhouette_mock):
+        maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+        maui_model.z = pd.DataFrame(np.random.randn(10,2),
+            index=[f'sample {i}' for i in range(10)],
+            columns=['LF1', 'LF2'])
+        maui_model.x = pd.DataFrame(np.random.randn(20,10),
+            index=[f'feature {i}' for i in range(20)],
+            columns=[f'sample {i}' for i in range(10)])
+        maui_model.cluster(optimal_k_method='silhouette', optimal_k_range=[1,2,3]) # the second trial is k=2
+
+        assert maui_model.optimal_k_ == 2
+
+def test_maui_clusters_picks_optimal_k_with_custom_scoring():
+    scorer = mock.Mock()
+    scorer.side_effect = [2,3,1] # the optimal AMI will be given at the second trial
+
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model.z = pd.DataFrame(np.random.randn(10,2),
+        index=[f'sample {i}' for i in range(10)],
+        columns=['LF1', 'LF2'])
+    maui_model.x = pd.DataFrame(np.random.randn(20,10),
+        index=[f'feature {i}' for i in range(20)],
+        columns=[f'sample {i}' for i in range(10)])
+    maui_model.cluster(optimal_k_method=scorer, optimal_k_range=[1,2,3]) # the second trial is k=2
+
+    assert maui_model.optimal_k_ == 2
