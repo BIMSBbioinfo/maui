@@ -48,6 +48,7 @@ def test_dict2array():
     assert arr.shape[0] == len(df1.columns)
     assert arr.shape[1] == len(df1.index) + len(df2.index)
 
-def test_maui():
+def test_maui_saves_feature_correlations():
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
     z = maui_model.fit_transform({'d1': df1, 'd2': df2})
+    assert hasattr(maui_model, 'feature_correlations')

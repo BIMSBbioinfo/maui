@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
 from .autoencoders_architectures import stacked_vae
+import maui.utils
 
 class Maui(BaseEstimator):
     """Maui (Multi-omics Autoencoder Integration) model.
@@ -49,10 +50,10 @@ class Maui(BaseEstimator):
         -------
         self : Maui object
         """
-        self.x_train = self._dict2array(X)
-        x_test = self._dict2array(X_validation) if X_validation else self.x_train
+        self.x = self._dict2array(X)
+        x_test = self._dict2array(X_validation) if X_validation else self.x
         hist, vae, encoder, decoder = stacked_vae(
-            self.x_train, x_test,
+            self.x, x_test,
             hidden_dims=self.n_hidden, latent_dim=self.n_latent,
             batch_size=self.batch_size, epochs=self.epochs)
         self.hist = hist
@@ -76,10 +77,12 @@ class Maui(BaseEstimator):
         z:  DataFrame (n_samples, n_latent_factors)
             Latent factors representation of the data X.
         """
-        x = self._dict2array(X)
-        return pd.DataFrame(self.encoder.predict(x),
-            index=x.index,
+        self.x = self._dict2array(X)
+        self.z = pd.DataFrame(self.encoder.predict(self.x),
+            index=self.x.index,
             columns=[f'LF{i}' for i in range(1,self.n_latent+1)])
+        self.feature_correlations = maui.utils.map_factors_to_features(self.z, self.x)
+        return self.z
 
     def fit_transform(self, X, y=None, X_validation=None):
         """Train autoencoder model, and return the latent factor representation
