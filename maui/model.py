@@ -58,7 +58,7 @@ class Maui(BaseEstimator):
             self.x, x_test,
             hidden_dims=self.n_hidden, latent_dim=self.n_latent,
             batch_size=self.batch_size, epochs=self.epochs)
-        self.hist = hist
+        self.hist = pd.DataFrame(hist.history)
         self.vae = vae
         self.encoder = encoder
         self.decoder = decoder
@@ -147,8 +147,8 @@ class Maui(BaseEstimator):
             else:
                 scorer = optimal_k_method
             yhats = { k: pd.Series(KMeans(k, **kmeans_kwargs).fit_predict(self.z), index=self.z.index) for k in optimal_k_range }
-            scores = [scorer(yhats[k]) for k in optimal_k_range]
-            self.optimal_k_ = np.array(optimal_k_range)[np.argmax(scores)]
+            self.kmeans_scores = pd.Series([scorer(yhats[k]) for k in optimal_k_range], index=optimal_k_range)
+            self.optimal_k_ = np.argmax(self.kmeans_scores)
             self.yhat_ = yhats[self.optimal_k_]
             return self.yhat_
 
