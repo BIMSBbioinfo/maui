@@ -114,7 +114,8 @@ def estimate_kaplan_meier(y, survival,
     sfs = dict()
     for cl in y.unique():
         ixs = list(set(y[y==cl].index) & set(survival.index))
-        kmf.fit(survival.loc[ixs].duration, survival.loc[ixs].observed, label=cl)
+        kmf.fit(survival.loc[ixs][time_column],
+            survival.loc[ixs][observed_column], label=cl)
         sfs[cl] = kmf.survival_function_
     return pd.concat([sfs[k] for k in sorted(y.unique())], axis=1).interpolate()
 
@@ -140,9 +141,15 @@ def multivariate_logrank_test(y, survival,
 
     Returns
     -------
-
+    test_statistic:     the test statistic (chi-square)
+    p_value:            the associated p_value
     """
     try:
         import lifelines
     except ImportError:
         raise ImportError('The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.')
+    ixs = list(set(y.index) & set(survival.index))
+    mlr = lifelines.statistics.multivariate_logrank_test(survival.loc[ixs][time_column],
+                                                         y.loc[ixs],
+                                                         survival.loc[ixs][observed_column])
+    return mlr.test_statistic, mlr.p_value

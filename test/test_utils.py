@@ -71,3 +71,12 @@ def test_estimate_km():
 
     assert 'a' in km.columns
     assert 'b' in km.columns
+
+def test_multivariate_logrank_test():
+    yhat = pd.Series(['a','a','a','b','b','b'], index=[f'Sample {i}' for i in range(6)])
+    durations = np.random.poisson(6,6)
+    observed = np.random.randn(6)>.1
+    survival = pd.DataFrame(dict(duration=durations, observed=observed),
+        index=[f'Sample {i}' for i in range(6)])
+    test_stat, p_val = utils.multivariate_logrank_test(yhat, survival)
+    assert p_val < 1.
