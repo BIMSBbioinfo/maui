@@ -78,7 +78,10 @@ def test_maui_clusters_picks_optimal_k_by_ami():
         maui_model.x_ = pd.DataFrame(np.random.randn(20,10),
             index=[f'feature {i}' for i in range(20)],
             columns=[f'sample {i}' for i in range(10)])
-        maui_model.cluster(ami_y=np.arange(10), optimal_k_range=[1,2,3]) # the second trial is k=2
+
+        the_y = pd.Series(np.arange(10), index=maui_model.z_.index)
+
+        maui_model.cluster(ami_y=the_y, optimal_k_range=[1,2,3]) # the second trial is k=2
 
         assert maui_model.optimal_k_ == 2
 
@@ -137,3 +140,18 @@ def test_maui_computes_roc_and_auc():
 
     aucs = maui_model.compute_auc(y, cv_folds=2)
     assert aucs == maui_model.aucs_
+
+def test_maui_clusters_only_samples_in_y_index_when_optimizing():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model.z_ = pd.DataFrame(np.random.randn(10,2),
+        index=[f'sample {i}' for i in range(10)],
+        columns=['LF1', 'LF2'])
+    maui_model.x_ = pd.DataFrame(np.random.randn(20,10),
+        index=[f'feature {i}' for i in range(20)],
+        columns=[f'sample {i}' for i in range(10)])
+
+    y = pd.Series(['a','a','a','b','b','b'],
+        index=[f'sample {i}' for i in range(6)])
+
+    yhat = maui_model.cluster(ami_y=y, optimal_k_range=[1,2,3])
+    assert set(yhat.index) == set(y.index)

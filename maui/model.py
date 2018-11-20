@@ -140,13 +140,16 @@ class Maui(BaseEstimator):
                 from sklearn.metrics import adjusted_mutual_info_score
                 if ami_y is None:
                     raise Exception("Must provide ``ami_y`` if using 'ami' to select optimal K.")
+                z_to_use = self.z_.loc[ami_y.index]
                 scorer = lambda yhat: adjusted_mutual_info_score(ami_y, yhat)
             elif optimal_k_method == 'silhouette':
                 from sklearn.metrics import silhouette_score
-                scorer = lambda yhat: silhouette_score(self.z_, yhat)
+                z_to_use = self.z_
+                scorer = lambda yhat: silhouette_score(z_to_use, yhat)
             else:
+                z_to_use = self.z_
                 scorer = optimal_k_method
-            yhats = { k: pd.Series(KMeans(k, **kmeans_kwargs).fit_predict(self.z_), index=self.z_.index) for k in optimal_k_range }
+            yhats = { k: pd.Series(KMeans(k, **kmeans_kwargs).fit_predict(z_to_use), index=z_to_use.index) for k in optimal_k_range }
             score_name = optimal_k_method if isinstance(optimal_k_method, str) else optimal_k_method.__name__
             self.kmeans_scores = pd.Series([scorer(yhats[k]) for k in optimal_k_range], index=optimal_k_range, name=score_name)
             self.kmeans_scores.index.name = 'K'
