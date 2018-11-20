@@ -60,3 +60,14 @@ def test_compute_auc():
     tpr = [0. , 0.5, 0.5, 1. , 1. ]
     roc = utils.auc(fpr, tpr)
     assert roc - 0.75 < 1e-6
+
+def test_estimate_km():
+    yhat = pd.Series(['a','a','a','b','b','b'], index=[f'Sample {i}' for i in range(6)])
+    durations = np.random.poisson(6,6)
+    observed = np.random.randn(6)>.1
+    survival = pd.DataFrame(dict(duration=durations, observed=observed),
+        index=[f'Sample {i}' for i in range(6)])
+    km = utils.estimate_kaplan_meier(yhat, survival)
+
+    assert 'a' in km.columns
+    assert 'b' in km.columns

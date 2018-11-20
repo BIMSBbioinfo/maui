@@ -82,3 +82,67 @@ def compute_roc(z, y, classifier=LinearSVC(C=.001), cv_folds=10):
         pd.Series(mean_tpr, name='TPR'),
     ], axis=1)
     return roc_curves
+
+def estimate_kaplan_meier(y, survival,
+    time_column='duration', observed_column='observed'):
+    """Estimate survival curves for groups defined in y based on survival data in ``survival``
+
+    Parameters
+    ----------
+    y:                  pd.Series, groups (clusters, subtypes). the index is
+                        the sample names
+    survival:           pd.DataFrame with the same index as y, with columns for
+                        the duration (survival time for each patient) and whether
+                        or not the death was observed. If the death was not
+                        observed (sensored), the duration is the time of the last
+                        followup.
+    time_column:        the name of the column in  ``survival`` with the duration
+    observed_column:    the name of the column in ``survival`` with True/False values
+                        for whether death was observed or not
+
+    Returns
+    -------
+    km_estimates:       pd.DataFrame, index is the timeline, columns are survival
+                        functions (estimated by Kaplan-Meier) for each class, as
+                        defined in ``y``.
+    """
+    try:
+        import lifelines
+    except ImportError:
+        raise ImportError('The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.')
+    kmf = lifelines.KaplanMeierFitter()
+    sfs = dict()
+    for cl in y.unique():
+        ixs = list(set(y[y==cl].index) & set(survival.index))
+        kmf.fit(survival.loc[ixs].duration, survival.loc[ixs].observed, label=cl)
+        sfs[cl] = kmf.survival_function_
+    return pd.concat([sfs[k] for k in sorted(y.unique())], axis=1).interpolate()
+
+def multivariate_logrank_test(y, survival,
+    time_column='duration', observed_column='observed'):
+    """Compute the multivariate log-rank test for differential survival
+    among the groups defined by ``y`` in the survival data in ``survival``,
+    under the null-hypothesis that all groups have the same survival function
+    (i.e. test whether at least one group has different survival rates)
+
+    Parameters
+    ----------
+    y:                  pd.Series, groups (clusters, subtypes). the index is
+                        the sample names
+    survival:           pd.DataFrame with the same index as y, with columns for
+                        the duration (survival time for each patient) and whether
+                        or not the death was observed. If the death was not
+                        observed (sensored), the duration is the time of the last
+                        followup.
+    time_column:        the name of the column in  ``survival`` with the duration
+    observed_column:    the name of the column in ``survival`` with True/False values
+                        for whether death was observed or not
+
+    Returns
+    -------
+
+    """
+    try:
+        import lifelines
+    except ImportError:
+        raise ImportError('The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.')
