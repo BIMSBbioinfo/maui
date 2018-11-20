@@ -52,5 +52,11 @@ def test_compute_roc():
     )
     dummy_y = pd.Series(['a', 'b', 'a', 'c', 'b', 'c'], index=dummy_z.index)
 
-    fpr, tpr = utils.compute_roc(dummy_z, dummy_y, cv_folds=2)
-    assert np.allclose(fpr['a'], [0.  , 0.5 , 0.5 , 0.75, 1.  ])
+    roc_curves = utils.compute_roc(dummy_z, dummy_y, cv_folds=2)
+    assert np.allclose(roc_curves['a'].FPR, [0.  , 0.5 , 0.5 , 0.75, 1.  ])
+
+def test_compute_auc():
+    fpr = [0. , 0. , 0.5, 0.5, 1. ]
+    tpr = [0. , 0.5, 0.5, 1. , 1. ]
+    roc = utils.auc(fpr, tpr)
+    assert roc - 0.75 < 1e-6

@@ -37,9 +37,9 @@ def map_factors_to_features(z, concatenated_data, pval_threshold=.001):
     return feature_s
 
 
+
 def compute_roc(z, y, classifier=LinearSVC(C=.001), cv_folds=10):
-    """
-    Compute the ROC (false positive rate, true positive rate) using cross-validation.
+    """Compute the ROC (false positive rate, true positive rate) using cross-validation.
 
     Parameters
     ----------
@@ -49,8 +49,9 @@ def compute_roc(z, y, classifier=LinearSVC(C=.001), cv_folds=10):
 
     Returns
     -------
-    fpr, tpr:   dict with DataFrame with false positive rate (fpr) and true positive rate (tpr)
-                one per class (inferred from y) as well as mean ROC
+    roc_curves: dict, one key per class as well as "mean", each value is a dataframe
+                containing the tpr (true positive rate) and fpr (falce positive rate)
+                defining that class (or the mean) ROC.
     """
     class_names = sorted(y.unique())
     z_to_use = z.loc[y.index]
@@ -58,22 +59,26 @@ def compute_roc(z, y, classifier=LinearSVC(C=.001), cv_folds=10):
     y_proba = cross_val_predict(classifier, z_to_use, y, cv=cv_folds, method='decision_function')
 
     # Compute ROC curve and ROC area for each class
-    fpr = dict()
-    tpr = dict()
-    roc_auc = dict()
+    roc_curves = dict()
     for i, cl_name in enumerate(class_names):
-        fpr[cl_name], tpr[cl_name], _ = roc_curve(y_true_bin[:, i], y_proba[:, i])
+        fpr, tpr, thresholds = roc_curve(y_true_bin[:, i], y_proba[:, i])
+        roc_curves[cl_name] = pd.concat([
+            pd.Series(fpr, name='FPR'),
+            pd.Series(tpr, name='TPR'),
+        ], axis=1)
 
-    mean_fpr = np.unique(np.concatenate([fpr[cl_name] for cl_name in class_names]))
+    mean_fpr = np.unique(np.concatenate([roc_curves[cl_name].FPR for cl_name in class_names]))
 
     # Then interpolate all ROC curves at this points
     mean_tpr = np.zeros_like(mean_fpr)
     for cl_name in class_names:
-        mean_tpr += interp(mean_fpr, fpr[cl_name], tpr[cl_name])
+        mean_tpr += interp(mean_fpr, roc_curves[cl_name].FPR, roc_curves[cl_name].TPR)
 
-    # Finally average it and compute AUC
+    # Finally average it
     mean_tpr /= len(class_names)
 
-    fpr["mean"] = mean_fpr
-    tpr["mean"] = mean_tpr
-    return fpr, tpr
+    roc_curves["mean"] = pd.concat([
+        pd.Series(mean_fpr, name='FPR'),
+        pd.Series(mean_tpr, name='TPR'),
+    ], axis=1)
+    return roc_curves

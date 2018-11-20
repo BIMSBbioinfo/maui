@@ -24,19 +24,19 @@ df_empty = pd.DataFrame(np.random.randn(0, len(samples)),
 
 def test_validate_X_fails_if_not_dict():
     maui_model = Maui()
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         maui_model._validate_X([1,2,3])
 
 def test_validate_X_fails_if_samples_mismatch():
     maui_model = Maui()
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         df2_bad = df2.iloc[:,:2]
         data_with_mismatching_samples = {'a': df1, 'b': df2_bad}
         maui_model._validate_X(data_with_mismatching_samples)
 
 def test_validate_X_fails_if_some_data_empty():
     maui_model = Maui()
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         maui_model._validate_X({'a': df1, 'e': df_empty})
 
 def test_validate_X_returns_true_on_valid_data():
@@ -57,10 +57,10 @@ def test_maui_saves_feature_correlations():
 
 def test_maui_clusters_with_single_k():
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
-    maui_model.z = pd.DataFrame(np.random.randn(10,2),
+    maui_model.z_ = pd.DataFrame(np.random.randn(10,2),
         index=[f'sample {i}' for i in range(10)],
         columns=['LF1', 'LF2'])
-    maui_model.x = pd.DataFrame(np.random.randn(20,10),
+    maui_model.x_ = pd.DataFrame(np.random.randn(20,10),
         index=[f'feature {i}' for i in range(20)],
         columns=[f'sample {i}' for i in range(10)])
 
@@ -72,10 +72,10 @@ def test_maui_clusters_picks_optimal_k_by_ami():
     ami_mock.side_effect = [2,3,1] # the optimal AMI will be given at the second trial
     with mock.patch('sklearn.metrics.adjusted_mutual_info_score', ami_mock):
         maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
-        maui_model.z = pd.DataFrame(np.random.randn(10,2),
+        maui_model.z_ = pd.DataFrame(np.random.randn(10,2),
             index=[f'sample {i}' for i in range(10)],
             columns=['LF1', 'LF2'])
-        maui_model.x = pd.DataFrame(np.random.randn(20,10),
+        maui_model.x_ = pd.DataFrame(np.random.randn(20,10),
             index=[f'feature {i}' for i in range(20)],
             columns=[f'sample {i}' for i in range(10)])
         maui_model.cluster(ami_y=np.arange(10), optimal_k_range=[1,2,3]) # the second trial is k=2
@@ -87,10 +87,10 @@ def test_maui_clusters_picks_optimal_k_by_silhouette():
     silhouette_mock.side_effect = [2,3,1] # the optimal silhouette will be given at the second trial
     with mock.patch('sklearn.metrics.silhouette_score', silhouette_mock):
         maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
-        maui_model.z = pd.DataFrame(np.random.randn(10,2),
+        maui_model.z_ = pd.DataFrame(np.random.randn(10,2),
             index=[f'sample {i}' for i in range(10)],
             columns=['LF1', 'LF2'])
-        maui_model.x = pd.DataFrame(np.random.randn(20,10),
+        maui_model.x_ = pd.DataFrame(np.random.randn(20,10),
             index=[f'feature {i}' for i in range(20)],
             columns=[f'sample {i}' for i in range(10)])
         maui_model.cluster(optimal_k_method='silhouette', optimal_k_range=[1,2,3]) # the second trial is k=2
@@ -103,12 +103,37 @@ def test_maui_clusters_picks_optimal_k_with_custom_scoring():
     scorer.__name__ = 'mock_scorer'
 
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
-    maui_model.z = pd.DataFrame(np.random.randn(10,2),
+    maui_model.z_ = pd.DataFrame(np.random.randn(10,2),
         index=[f'sample {i}' for i in range(10)],
         columns=['LF1', 'LF2'])
-    maui_model.x = pd.DataFrame(np.random.randn(20,10),
+    maui_model.x_ = pd.DataFrame(np.random.randn(20,10),
         index=[f'feature {i}' for i in range(20)],
         columns=[f'sample {i}' for i in range(10)])
     maui_model.cluster(optimal_k_method=scorer, optimal_k_range=[1,2,3]) # the second trial is k=2
 
     assert maui_model.optimal_k_ == 2
+
+def test_maui_computes_roc_and_auc():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model.z_ = pd.DataFrame(
+        [
+            [0,1,1,1,0,1,1,0,0],
+            [1,0,0,0,0,0,1,1,0],
+            [1,0,1,0,0,0,1,1,0],
+            [1,0,0,1,0,0,1,1,0],
+            [1,0,0,0,1,1,1,1,0],
+            [1,1,1,0,0,0,1,1,1],
+        ],
+        index=[f'sample {i}' for i in range(6)],
+        columns=[f'LF{i}' for i in range(9)]
+    )
+    y = pd.Series(['a', 'b', 'a', 'c', 'b', 'c'], index=maui_model.z_.index)
+    rocs = maui_model.compute_roc(y, cv_folds=2)
+    assert rocs == maui_model.roc_curves_
+    assert 'a' in rocs
+    assert 'b' in rocs
+    assert 'c' in rocs
+    assert "mean" in rocs
+
+    aucs = maui_model.compute_auc(y, cv_folds=2)
+    assert aucs == maui_model.aucs_
