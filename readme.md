@@ -4,7 +4,7 @@
 
 # maui
 
-[![Build Status](https://travis-ci.com/BIMSBbioinfo/maui.svg?branch=master)](https://travis-ci.com/BIMSBbioinfo/maui)  [![codecov](https://codecov.io/gh/bimsbbioinfo/maui/branch/master/graph/badge.svg)](https://codecov.io/gh/bimsbbioinfo/maui) [![PyPI version](https://badge.fury.io/py/maui-tools.svg)](https://badge.fury.io/py/maui-tools)
+[![Build Status](https://travis-ci.com/BIMSBbioinfo/maui.svg?branch=master)](https://travis-ci.com/BIMSBbioinfo/maui)  [![codecov](https://codecov.io/gh/bimsbbioinfo/maui/branch/master/graph/badge.svg)](https://codecov.io/gh/bimsbbioinfo/maui) [![PyPI version](https://badge.fury.io/py/maui-tools.svg)](https://badge.fury.io/py/maui-tools) [![Documentation Status](https://readthedocs.org/projects/maui/badge/?version=latest)](https://maui.readthedocs.io/en/latest/?badge=latest)
 
 
 
@@ -29,7 +29,7 @@ Survival analysis functionality supplied by lifelines [1]. It may be installed d
 
 ## Usage
 
-Documentation in progress.
+Please check out [the documentation](https://maui.readthedocs.io/en/latest/).
 
 
 ## Citation
