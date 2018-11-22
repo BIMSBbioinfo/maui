@@ -1,0 +1,239 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Maui Utilities &#8212;  0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="The Maui Class" href="maui.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-maui.utils">
+<span id="maui-utilities"></span><h1>Maui Utilities<a class="headerlink" href="#module-maui.utils" title="Permalink to this headline">¶</a></h1>
+<p>The maui.utils model contains utility functions for multi-omics analysis
+using maui.</p>
+<dl class="function">
+<dt id="maui.utils.compute_harrells_c">
+<code class="descclassname">maui.utils.</code><code class="descname">compute_harrells_c</code><span class="sig-paren">(</span><em>z, survival, duration_column='duration', observed_column='observed', cox_penalties=[0.1, 1, 10, 100, 1000, 10000], cv_folds=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#compute_harrells_c"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.compute_harrells_c" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute’s Harrell’s c-Index for a Cox Proportional Hazards regression modeling
+survival by the latent factors in z.</p>
+<p>z:                  pd.DataFrame (n_samples, n_latent factors)
+survival:           pd.DataFrame of survival information and relevant covariates</p>
+<blockquote>
+<div>(such as sex, age at diagnosis, or tumor stage)</div></blockquote>
+<dl class="docutils">
+<dt>duration_column:    the name of the column in <code class="docutils literal notranslate"><span class="pre">survival</span></code> containing the</dt>
+<dd>duration (time between diagnosis and death or last followup)</dd>
+<dt>observed_column:    the name of the column in <code class="docutils literal notranslate"><span class="pre">survival</span></code> containing</dt>
+<dd>indicating whether time of death is known</dd>
+<dt>cox_penalties:      penalty coefficient in Cox PH solver (see <code class="docutils literal notranslate"><span class="pre">lifelines.CoxPHFitter</span></code>)</dt>
+<dd>to try. Returns the best c given by the different penalties
+(by cross-validation)</dd>
+</dl>
+<p>cv_folds:           number of cross-validation folds to compute C</p>
+<dl class="docutils">
+<dt>cs: array, Harrell’s c-Index, an auc-like metric for survival prediction accuracy.</dt>
+<dd>one value per cv_fold</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="maui.utils.compute_roc">
+<code class="descclassname">maui.utils.</code><code class="descname">compute_roc</code><span class="sig-paren">(</span><em>z</em>, <em>y</em>, <em>classifier=LinearSVC(C=0.001</em>, <em>class_weight=None</em>, <em>dual=True</em>, <em>fit_intercept=True</em>, <em>intercept_scaling=1</em>, <em>loss='squared_hinge'</em>, <em>max_iter=1000</em>, <em>multi_class='ovr'</em>, <em>penalty='l2'</em>, <em>random_state=None</em>, <em>tol=0.0001</em>, <em>verbose=0)</em>, <em>cv_folds=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#compute_roc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.compute_roc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the ROC (false positive rate, true positive rate) using cross-validation.</p>
+<p>z:          DataFrame (n_samples, n_latent_factors) of latent factor values
+y:          Series (n_samples,) of ground-truth labels to try to predict
+classifier: Classifier object to use, default <code class="docutils literal notranslate"><span class="pre">LinearSVC(C=.001)</span></code></p>
+<dl class="docutils">
+<dt>roc_curves: dict, one key per class as well as “mean”, each value is a dataframe</dt>
+<dd>containing the tpr (true positive rate) and fpr (falce positive rate)
+defining that class (or the mean) ROC.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="maui.utils.estimate_kaplan_meier">
+<code class="descclassname">maui.utils.</code><code class="descname">estimate_kaplan_meier</code><span class="sig-paren">(</span><em>y</em>, <em>survival</em>, <em>duration_column='duration'</em>, <em>observed_column='observed'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#estimate_kaplan_meier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.estimate_kaplan_meier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimate survival curves for groups defined in y based on survival data in <code class="docutils literal notranslate"><span class="pre">survival</span></code></p>
+<dl class="docutils">
+<dt>y:                  pd.Series, groups (clusters, subtypes). the index is</dt>
+<dd>the sample names</dd>
+<dt>survival:           pd.DataFrame with the same index as y, with columns for</dt>
+<dd>the duration (survival time for each patient) and whether
+or not the death was observed. If the death was not
+observed (sensored), the duration is the time of the last
+followup.</dd>
+</dl>
+<p>duration_column:        the name of the column in  <code class="docutils literal notranslate"><span class="pre">survival</span></code> with the duration
+observed_column:    the name of the column in <code class="docutils literal notranslate"><span class="pre">survival</span></code> with True/False values</p>
+<blockquote>
+<div>for whether death was observed or not</div></blockquote>
+<dl class="docutils">
+<dt>km_estimates:       pd.DataFrame, index is the timeline, columns are survival</dt>
+<dd>functions (estimated by Kaplan-Meier) for each class, as
+defined in <code class="docutils literal notranslate"><span class="pre">y</span></code>.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="maui.utils.map_factors_to_features">
+<code class="descclassname">maui.utils.</code><code class="descname">map_factors_to_features</code><span class="sig-paren">(</span><em>z</em>, <em>concatenated_data</em>, <em>pval_threshold=0.001</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#map_factors_to_features"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.map_factors_to_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute pearson correlation of latent factors with input features.</p>
+<p>z:                  (n_samples, n_factors) DataFrame of latent factor values, output of maui model
+concatenated_data:  (n_samples, n_features) DataFrame of concatenated multi-omics data</p>
+<dl class="docutils">
+<dt>feature_s:  DataFrame (n_features, n_latent_factors)</dt>
+<dd>Latent factors representation of the data X.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="maui.utils.multivariate_logrank_test">
+<code class="descclassname">maui.utils.</code><code class="descname">multivariate_logrank_test</code><span class="sig-paren">(</span><em>y</em>, <em>survival</em>, <em>duration_column='duration'</em>, <em>observed_column='observed'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#multivariate_logrank_test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.multivariate_logrank_test" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the multivariate log-rank test for differential survival
+among the groups defined by <code class="docutils literal notranslate"><span class="pre">y</span></code> in the survival data in <code class="docutils literal notranslate"><span class="pre">survival</span></code>,
+under the null-hypothesis that all groups have the same survival function
+(i.e. test whether at least one group has different survival rates)</p>
+<dl class="docutils">
+<dt>y:                  pd.Series, groups (clusters, subtypes). the index is</dt>
+<dd>the sample names</dd>
+<dt>survival:           pd.DataFrame with the same index as y, with columns for</dt>
+<dd>the duration (survival time for each patient) and whether
+or not the death was observed. If the death was not
+observed (sensored), the duration is the time of the last
+followup.</dd>
+</dl>
+<p>duration_column:        the name of the column in  <code class="docutils literal notranslate"><span class="pre">survival</span></code> with the duration
+observed_column:    the name of the column in <code class="docutils literal notranslate"><span class="pre">survival</span></code> with True/False values</p>
+<blockquote>
+<div>for whether death was observed or not</div></blockquote>
+<p>test_statistic:     the test statistic (chi-square)
+p_value:            the associated p_value</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="maui.utils.select_clinical_factors">
+<code class="descclassname">maui.utils.</code><code class="descname">select_clinical_factors</code><span class="sig-paren">(</span><em>z</em>, <em>survival</em>, <em>duration_column='duration'</em>, <em>observed_column='observed'</em>, <em>alpha=0.05</em>, <em>cox_penalizer=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#select_clinical_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.select_clinical_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Select latent factors which are predictive of survival. This is
+accomplished by fitting a Cox Proportional Hazards (CPH) model to each
+latent factor, while controlling for known covariates, and only keeping
+those latent factors whose coefficient in the CPH is nonzero (adjusted
+p-value &lt; alpha).</p>
+<dl class="docutils">
+<dt>survival:           pd.DataFrame of survival information and relevant covariates</dt>
+<dd>(such as sex, age at diagnosis, or tumor stage)</dd>
+<dt>duration_column:    the name of the column in <code class="docutils literal notranslate"><span class="pre">survival</span></code> containing the</dt>
+<dd>duration (time between diagnosis and death or last followup)</dd>
+<dt>observed_column:    the name of the column in <code class="docutils literal notranslate"><span class="pre">survival</span></code> containing</dt>
+<dd>indicating whether time of death is known</dd>
+<dt>alpha:              threshold for p-value of CPH coefficients to call a latent</dt>
+<dd>factor clinically relevant (p &lt; alpha)</dd>
+</dl>
+<p>cox_penalizer:      penalty coefficient in Cox PH solver (see <code class="docutils literal notranslate"><span class="pre">lifelines.CoxPHFitter</span></code>)</p>
+<dl class="docutils">
+<dt>z_clinical: pd.DataFrame, subset of the latent factors which have been</dt>
+<dd>determined to have clinical value (are individually predictive
+of survival, controlling for covariates)</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/hex-maui.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="index.html"></a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="maui.html">The Maui Class</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Maui Utilities</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="maui.html" title="previous chapter">The Maui Class</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Jonathan Ronen, Altuna Akalin.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/utils.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

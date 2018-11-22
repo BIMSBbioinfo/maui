@@ -1,0 +1,406 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>maui.model &#8212;  0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for maui.model</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">maui.utils</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="k">import</span> <span class="n">KMeans</span>
+<span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="k">import</span> <span class="n">BaseEstimator</span>
+<span class="kn">from</span> <span class="nn">.autoencoders_architectures</span> <span class="k">import</span> <span class="n">stacked_vae</span>
+
+
+<div class="viewcode-block" id="Maui"><a class="viewcode-back" href="../../maui.html#maui.Maui">[docs]</a><span class="k">class</span> <span class="nc">Maui</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Maui (Multi-omics Autoencoder Integration) model.</span>
+
+<span class="sd">    Trains a variational autoencoder to find latent factors in multi-modal data.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n_hidden: array (default [1500])</span>
+<span class="sd">        The sizes of the hidden layers of the autoencoder architecture.</span>
+<span class="sd">        Each element of the array specifies the number of nodes in successive</span>
+<span class="sd">        layers of the autoencoder</span>
+
+<span class="sd">    n_latent: int (default 80)</span>
+<span class="sd">        The size of the latent layer (number of latent features)</span>
+
+<span class="sd">    batch_size: int (default 100)</span>
+<span class="sd">        The size of the mini-batches used for training the network</span>
+
+<span class="sd">    epochs: int (default 400)</span>
+<span class="sd">        The number of epoches to use for training the network</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_hidden</span><span class="o">=</span><span class="p">[</span><span class="mi">1500</span><span class="p">],</span> <span class="n">n_latent</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">400</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span> <span class="o">=</span> <span class="n">n_hidden</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_latent</span> <span class="o">=</span> <span class="n">n_latent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span> <span class="o">=</span> <span class="n">epochs</span>
+
+<div class="viewcode-block" id="Maui.fit"><a class="viewcode-back" href="../../maui.html#maui.Maui.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">X_validation</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Train autoencoder model</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X:  dict with multi-modal dataframes, containing training data, e.g.</span>
+<span class="sd">            {&#39;mRNA&#39;: df1, &#39;SNP&#39;: df2},</span>
+<span class="sd">            df1, df2, etc. are (n_features, n_samples) pandas.DataFrame&#39;s.</span>
+<span class="sd">            The sample names must match, the feature names need not.</span>
+<span class="sd">        X_validation: optional, dict with multi-modal dataframes, containing validation data</span>
+<span class="sd">            will be used to compute validation loss under training</span>
+<span class="sd">        y:  Not used.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : Maui object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2array</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">x_test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2array</span><span class="p">(</span><span class="n">X_validation</span><span class="p">)</span> <span class="k">if</span> <span class="n">X_validation</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_</span>
+        <span class="n">hist</span><span class="p">,</span> <span class="n">vae</span><span class="p">,</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">decoder</span> <span class="o">=</span> <span class="n">stacked_vae</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="p">,</span> <span class="n">x_test</span><span class="p">,</span>
+            <span class="n">hidden_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span><span class="p">,</span> <span class="n">latent_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_latent</span><span class="p">,</span>
+            <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hist</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vae</span> <span class="o">=</span> <span class="n">vae</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">encoder</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span> <span class="o">=</span> <span class="n">decoder</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="Maui.transform"><a class="viewcode-back" href="../../maui.html#maui.Maui.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Transform X into the latent space that was previously learned using</span>
+<span class="sd">        `fit` or `fit_transform`, and return the latent factor representation.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X:  dict with multi-modal dataframes, containing training data, e.g.</span>
+<span class="sd">            {&#39;mRNA&#39;: df1, &#39;SNP&#39;: df2},</span>
+<span class="sd">            df1, df2, etc. are (n_features, n_samples) pandas.DataFrame&#39;s.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        z:  DataFrame (n_samples, n_latent_factors)</span>
+<span class="sd">            Latent factors representation of the data X.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2array</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">z_</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="p">),</span>
+            <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">f</span><span class="s1">&#39;LF</span><span class="si">{i}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">n_latent</span><span class="o">+</span><span class="mi">1</span><span class="p">)])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_correlations</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">map_factors_to_features</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span></div>
+
+<div class="viewcode-block" id="Maui.fit_transform"><a class="viewcode-back" href="../../maui.html#maui.Maui.fit_transform">[docs]</a>    <span class="k">def</span> <span class="nf">fit_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">X_validation</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Train autoencoder model, and return the latent factor representation</span>
+<span class="sd">        of the data X.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X:  dict with multi-modal dataframes, containing training data, e.g.</span>
+<span class="sd">            {&#39;mRNA&#39;: df1, &#39;SNP&#39;: df2},</span>
+<span class="sd">            df1, df2, etc. are (n_samples, n_features) pandas.DataFrame&#39;s.</span>
+<span class="sd">            The sample names must match, the feature names need not.</span>
+<span class="sd">        X_validation: optional, dict with multi-modal dataframes, containing validation data</span>
+<span class="sd">            will be used to compute validation loss under training</span>
+<span class="sd">        y:  Not used.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        z:  DataFrame (n_samples, n_latent_factors)</span>
+<span class="sd">            Latent factors representation of the data X.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">X_validation</span><span class="o">=</span><span class="n">X_validation</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Maui.cluster"><a class="viewcode-back" href="../../maui.html#maui.Maui.cluster">[docs]</a>    <span class="k">def</span> <span class="nf">cluster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">optimal_k_method</span><span class="o">=</span><span class="s1">&#39;ami&#39;</span><span class="p">,</span>
+        <span class="n">optimal_k_range</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">ami_y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">kmeans_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;n_init&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span> <span class="s1">&#39;n_jobs&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}):</span>
+        <span class="sd">&quot;&quot;&quot;Cluster the samples using k-means based on the latent factors.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        k:                  optional, the number of clusters to find.</span>
+<span class="sd">                            if not given, will attempt to find optimal k.</span>
+<span class="sd">        optimal_k_method:   supported methods are &#39;ami&#39; and &#39;silhouette&#39;. Otherwise, callable.</span>
+<span class="sd">                            if &#39;ami&#39;, will pick K which gives the best AMI</span>
+<span class="sd">                            (adjusted mutual information) with external labels.</span>
+<span class="sd">                            if &#39;silhouette&#39; will pick the K which gives the best</span>
+<span class="sd">                            mean silhouette coefficient.</span>
+<span class="sd">                            if callable, should have signature ``scorer(yhat)``</span>
+<span class="sd">                            and return a scalar score.</span>
+<span class="sd">        optimal_k_range:    array-like, range of Ks to try to find optimal K among</span>
+<span class="sd">        ami_y:              array-like (n_samples), the ground-truth labels to use</span>
+<span class="sd">                            when picking K by &quot;best AMI against ground-truth&quot; method.</span>
+<span class="sd">        kmeans_kwargs:      optional, kwargs for initialization of sklearn.cluster.KMeans</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        yhat:   Series (n_samples) cluster labels for each sample</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">KMeans</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kmeans_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">optimal_k_method</span> <span class="o">==</span> <span class="s1">&#39;ami&#39;</span><span class="p">:</span>
+                <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="k">import</span> <span class="n">adjusted_mutual_info_score</span>
+                <span class="k">if</span> <span class="n">ami_y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Must provide ``ami_y`` if using &#39;ami&#39; to select optimal K.&quot;</span><span class="p">)</span>
+                <span class="n">z_to_use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ami_y</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+                <span class="n">scorer</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">yhat</span><span class="p">:</span> <span class="n">adjusted_mutual_info_score</span><span class="p">(</span><span class="n">ami_y</span><span class="p">,</span> <span class="n">yhat</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">optimal_k_method</span> <span class="o">==</span> <span class="s1">&#39;silhouette&#39;</span><span class="p">:</span>
+                <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="k">import</span> <span class="n">silhouette_score</span>
+                <span class="n">z_to_use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span>
+                <span class="n">scorer</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">yhat</span><span class="p">:</span> <span class="n">silhouette_score</span><span class="p">(</span><span class="n">z_to_use</span><span class="p">,</span> <span class="n">yhat</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">z_to_use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span>
+                <span class="n">scorer</span> <span class="o">=</span> <span class="n">optimal_k_method</span>
+            <span class="n">yhats</span> <span class="o">=</span> <span class="p">{</span> <span class="n">k</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">KMeans</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kmeans_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">z_to_use</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">z_to_use</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">optimal_k_range</span> <span class="p">}</span>
+            <span class="n">score_name</span> <span class="o">=</span> <span class="n">optimal_k_method</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optimal_k_method</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">optimal_k_method</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kmeans_scores</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="n">scorer</span><span class="p">(</span><span class="n">yhats</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">optimal_k_range</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="n">optimal_k_range</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">score_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kmeans_scores</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;K&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">optimal_k_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kmeans_scores</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">yhat_</span> <span class="o">=</span> <span class="n">yhats</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_k_</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">yhat_</span></div>
+
+
+<div class="viewcode-block" id="Maui.compute_roc"><a class="viewcode-back" href="../../maui.html#maui.Maui.compute_roc">[docs]</a>    <span class="k">def</span> <span class="nf">compute_roc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute Receiver Operating Characteristics curve for SVM prediction</span>
+<span class="sd">        of labels ``y`` from the latent factors. Computes both the ROC curves</span>
+<span class="sd">        (true positive rate, true negative rate), and the area under the roc (auc).</span>
+<span class="sd">        ROC and auROC computed for each class (the classes are inferred from ``y``),</span>
+<span class="sd">        as well as a &quot;mean&quot; ROC, computed by averaging the class ROCs. Only samples</span>
+<span class="sd">        in the index of ``y`` will be considered.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        y:          array-like (n_samples,), the labels of the samples to predict</span>
+<span class="sd">        **kwargs:   arguments for ``utils.compute_roc``</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        roc_curves: dict, one key per class as well as &quot;mean&quot;, each value is a dataframe</span>
+<span class="sd">                    containing the tpr (true positive rate) and fpr (falce positive rate)</span>
+<span class="sd">                    defining that class (or the mean) ROC.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">roc_curves_</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">compute_roc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">roc_curves_</span></div>
+
+<div class="viewcode-block" id="Maui.compute_auc"><a class="viewcode-back" href="../../maui.html#maui.Maui.compute_auc">[docs]</a>    <span class="k">def</span> <span class="nf">compute_auc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute area under the ROC curve for predicting the labels in y using the</span>
+<span class="sd">        latent features previously inferred.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        y:          labels to predict</span>
+<span class="sd">        **kwargs:   arguments for ``compute_roc``</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">        --------</span>
+<span class="sd">        aucs:   pd.Series, auc per class as well as mean</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_roc</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aucs_</span> <span class="o">=</span> <span class="p">{</span> <span class="n">k</span><span class="p">:</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">auc</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">roc_curves_</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">FPR</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">roc_curves_</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">TPR</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roc_curves_</span> <span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">aucs_</span></div>
+
+
+<div class="viewcode-block" id="Maui.select_clinical_factors"><a class="viewcode-back" href="../../maui.html#maui.Maui.select_clinical_factors">[docs]</a>    <span class="k">def</span> <span class="nf">select_clinical_factors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span>
+        <span class="n">duration_column</span><span class="o">=</span><span class="s1">&#39;duration&#39;</span><span class="p">,</span> <span class="n">observed_column</span><span class="o">=</span><span class="s1">&#39;observed&#39;</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="o">=.</span><span class="mi">05</span><span class="p">,</span> <span class="n">cox_penalizer</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Select latent factors which are predictive of survival. This is</span>
+<span class="sd">        accomplished by fitting a Cox Proportional Hazards (CPH) model to each</span>
+<span class="sd">        latent factor, while controlling for known covariates, and only keeping</span>
+<span class="sd">        those latent factors whose coefficient in the CPH is nonzero (adjusted</span>
+<span class="sd">        p-value &lt; alpha).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        survival:           pd.DataFrame of survival information and relevant covariates</span>
+<span class="sd">                            (such as sex, age at diagnosis, or tumor stage)</span>
+<span class="sd">        duration_column:    the name of the column in ``survival`` containing the</span>
+<span class="sd">                            duration (time between diagnosis and death or last followup)</span>
+<span class="sd">        observed_column:    the name of the column in ``survival`` containing</span>
+<span class="sd">                            indicating whether time of death is known</span>
+<span class="sd">        alpha:              threshold for p-value of CPH coefficients to call a latent</span>
+<span class="sd">                            factor clinically relevant (p &lt; alpha)</span>
+<span class="sd">        cox_penalizer:      penalty coefficient in Cox PH solver (see ``lifelines.CoxPHFitter``)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        z_clinical: pd.DataFrame, subset of the latent factors which have been</span>
+<span class="sd">                    determined to have clinical value (are individually predictive</span>
+<span class="sd">                    of survival, controlling for covariates)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">z_clinical_</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">select_clinical_factors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span>
+            <span class="n">duration_column</span><span class="o">=</span><span class="n">duration_column</span><span class="p">,</span> <span class="n">observed_column</span><span class="o">=</span><span class="n">observed_column</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span> <span class="n">cox_penalizer</span><span class="o">=</span><span class="n">cox_penalizer</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_clinical_</span></div>
+
+<div class="viewcode-block" id="Maui.c_index"><a class="viewcode-back" href="../../maui.html#maui.Maui.c_index">[docs]</a>    <span class="k">def</span> <span class="nf">c_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span> <span class="n">clinical_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">duration_column</span><span class="o">=</span><span class="s1">&#39;duration&#39;</span><span class="p">,</span> <span class="n">observed_column</span><span class="o">=</span><span class="s1">&#39;observed&#39;</span><span class="p">,</span>
+        <span class="n">cox_penalties</span><span class="o">=</span><span class="p">[</span><span class="o">.</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">1000</span><span class="p">,</span><span class="mi">10000</span><span class="p">],</span>
+        <span class="n">cv_folds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sel_clin_alpha</span><span class="o">=.</span><span class="mi">05</span><span class="p">,</span> <span class="n">sel_clin_penalty</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute&#39;s Harrell&#39;s c-Index for a Cox Proportional Hazards regression modeling</span>
+<span class="sd">        survival by the latent factors in z.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        z:                  pd.DataFrame (n_samples, n_latent factors)</span>
+<span class="sd">        survival:           pd.DataFrame of survival information and relevant covariates</span>
+<span class="sd">                            (such as sex, age at diagnosis, or tumor stage)</span>
+<span class="sd">        clinical_only:      Compute the c-Index for a model containing only</span>
+<span class="sd">                            individually clinically relevant latent factors</span>
+<span class="sd">                            (see ``select_clinical_factors``)</span>
+<span class="sd">        duration_column:    the name of the column in ``survival`` containing the</span>
+<span class="sd">                            duration (time between diagnosis and death or last followup)</span>
+<span class="sd">        observed_column:    the name of the column in ``survival`` containing</span>
+<span class="sd">                            indicating whether time of death is known</span>
+<span class="sd">        cox_penalties:      penalty coefficient in Cox PH solver (see ``lifelines.CoxPHFitter``)</span>
+<span class="sd">                            to try. Returns the best c given by the different penalties</span>
+<span class="sd">                            (by cross-validation)</span>
+<span class="sd">        cv_folds:           number of cross-validation folds to compute C</span>
+<span class="sd">        sel_clin_penalty:   CPH penalizer to use when selecting clinical factors</span>
+<span class="sd">        sel_clin_alpha:     significance level when selecting clinical factors</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        cs: array, Harrell&#39;s c-Index, an auc-like metric for survival prediction accuracy.</span>
+<span class="sd">            one value per cv_fold</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">clinical_only</span><span class="p">:</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_clinical_factors</span><span class="p">(</span><span class="n">survival</span><span class="p">,</span> <span class="n">duration_column</span><span class="p">,</span>
+                <span class="n">observed_column</span><span class="p">,</span> <span class="n">sel_clin_alpha</span><span class="p">,</span> <span class="n">sel_clin_penalty</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span>
+        <span class="k">return</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">compute_harrells_c</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span>
+            <span class="n">duration_column</span><span class="p">,</span> <span class="n">observed_column</span><span class="p">,</span>
+            <span class="n">cox_penalties</span><span class="p">,</span> <span class="n">cv_folds</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_validate_X</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;data must be a dict&quot;</span><span class="p">)</span>
+
+        <span class="n">df1</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">!=</span> <span class="n">df1</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;All dataframes must have same samples (columns)&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;One of the DataFrames was empty.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_validate_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_dict2array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_X</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">new_feature_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{k}</span><span class="s1">: </span><span class="si">{c}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">X</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">sample_names</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">columns</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">X</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">keys</span><span class="p">())])</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">sample_names</span><span class="p">,</span>
+            <span class="n">columns</span><span class="o">=</span><span class="n">new_feature_names</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index.html">
+              <img class="logo" src="../../_static/hex-maui.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../../index.html"></a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../maui.html">The Maui Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../utils.html">Maui Utilities</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Jonathan Ronen, Altuna Akalin.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
