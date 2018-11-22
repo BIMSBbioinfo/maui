@@ -1,4 +1,4 @@
-<div align="left">
+<div align="center">
 	<img src="hex-maui.png" alt="maui">
 </div>
 
