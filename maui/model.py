@@ -202,7 +202,7 @@ class Maui(BaseEstimator):
 
     def select_clinical_factors(self, survival,
         duration_column='duration', observed_column='observed',
-        alpha=.05):
+        alpha=.05, cox_penalizer=0):
         """Select latent factors which are predictive of survival. This is
         accomplished by fitting a Cox Proportional Hazards (CPH) model to each
         latent factor, while controlling for known covariates, and only keeping
@@ -219,6 +219,7 @@ class Maui(BaseEstimator):
                             indicating whether time of death is known
         alpha:              threshold for p-value of CPH coefficients to call a latent
                             factor clinically relevant (p < alpha)
+        cox_penalizer:      penalty coefficient in Cox PH solver (see ``lifelines.CoxPHFitter``)
 
         Returns
         -------
@@ -228,7 +229,7 @@ class Maui(BaseEstimator):
         """
         self.z_clinical_ = maui.utils.select_clinical_factors(self.z_, survival,
             duration_column=duration_column, observed_column=observed_column,
-            alpha=alpha)
+            alpha=alpha, cox_penalizer=cox_penalizer)
         return self.z_clinical_
 
 

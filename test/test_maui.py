@@ -159,21 +159,28 @@ def test_maui_clusters_only_samples_in_y_index_when_optimizing():
 def test_select_clinical_factors():
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
     maui_model.z_ = pd.DataFrame(
-    [
-        [1,1,1,0,0,0,1,0,1],
-        [1,1,1,1,0,1,1,1,0],
-        [1,1,1,1,1,0,0,1,0],
-        [0,0,0,1,0,0,1,1,0],
-        [0,0,0,1,0,1,1,1,1],
-        [0,0,0,0,1,0,0,0,0],
-    ],
-    index=[f'sample {i}' for i in range(6)],
-    columns=[f'LF{i}' for i in range(9)]
-) # here the first 3 factors separate the groups and the last 6 do not
+        [
+            [1,1,1,0,0,0,1,0,1],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,1,0,0,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,1,1,1,1],
+        ],
+        index=[f'sample {i}' for i in range(11)],
+        columns=[f'LF{i}' for i in range(9)]
+    ) # here the first 3 factors separate the groups and the last 6 do not
 
-    durations = np.random.poisson(6,6)
-    observed = np.random.randn(6)>.1
+    durations = [1,2,3,4,5,6, 1000,2000,3000, 4000, 5000] # here the first 3 have short durations, the last 3 longer ones
+    observed = [True]*11 # all events observed
     survival = pd.DataFrame(dict(duration=durations, observed=observed),
-        index=[f'sample {i}' for i in range(6)])
+        index=[f'sample {i}' for i in range(11)])
 
-    maui_model.select_clinical_factors(survival)
+    z_clin = maui_model.select_clinical_factors(survival, cox_penalizer=1)
+    assert 'LF0' in z_clin.columns
+    assert 'LF5' not in z_clin.columns

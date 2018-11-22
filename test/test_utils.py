@@ -86,18 +86,30 @@ def test_select_clinical_factors():
         [
             [1,1,1,0,0,0,1,0,1],
             [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
             [1,1,1,1,1,0,0,1,0],
             [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
             [0,0,0,1,0,1,1,1,1],
-            [0,0,0,0,1,0,0,0,0],
         ],
-        index=[f'sample {i}' for i in range(6)],
+        index=[f'sample {i}' for i in range(11)],
         columns=[f'LF{i}' for i in range(9)]
     ) # here the first 3 factors separate the groups and the last 6 do not
 
-    durations = [1,2,3,10,20,30] # here the first 3 have short durations, the last 3 longer ones
-    observed = [True]*6 # all events observed
+    durations = [1,2,3,4,5,6, 1000,2000,3000, 4000, 5000] # here the first 3 have short durations, the last 3 longer ones
+    observed = [True]*11 # all events observed
     survival = pd.DataFrame(dict(duration=durations, observed=observed),
-        index=[f'sample {i}' for i in range(6)])
+        index=[f'sample {i}' for i in range(11)])
 
-    utils.select_clinical_factors(dummy_z, survival)
+    z_clinical = utils.select_clinical_factors(dummy_z, survival, cox_penalizer=1)
+    assert 'LF0' in z_clinical.columns
+    assert 'LF1' in z_clinical.columns
+    assert 'LF2' in z_clinical.columns
+
+    assert 'LF3' not in z_clinical.columns
+    assert 'LF4' not in z_clinical.columns
+    assert 'LF5' not in z_clinical.columns

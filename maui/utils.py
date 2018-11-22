@@ -155,7 +155,8 @@ def multivariate_logrank_test(y, survival,
     return mlr.test_statistic, mlr.p_value
 
 def select_clinical_factors(z, survival,
-    duration_column='duration', observed_column='observed', alpha=.05):
+    duration_column='duration', observed_column='observed', alpha=.05,
+    cox_penalizer=0):
     """Select latent factors which are predictive of survival. This is
     accomplished by fitting a Cox Proportional Hazards (CPH) model to each
     latent factor, while controlling for known covariates, and only keeping
@@ -172,6 +173,7 @@ def select_clinical_factors(z, survival,
                         indicating whether time of death is known
     alpha:              threshold for p-value of CPH coefficients to call a latent
                         factor clinically relevant (p < alpha)
+    cox_penalizer:      penalty coefficient in Cox PH solver (see ``lifelines.CoxPHFitter``)
 
     Returns
     -------
@@ -179,12 +181,12 @@ def select_clinical_factors(z, survival,
                 determined to have clinical value (are individually predictive
                 of survival, controlling for covariates)
     """
-    unregularized_cox_coefficients = _unregularized_cph_coefs(z, survival,
-        duration_column, observed_column)
-    signif_cox_coefs = unregularized_cox_coefficients.T[unregularized_cox_coefficients.T.p<alpha]
+    cox_coefficients = _cph_coefs(z, survival,
+        duration_column, observed_column, penalizer=cox_penalizer)
+    signif_cox_coefs = cox_coefficients.T[cox_coefficients.T.p<alpha]
     return z.loc[:,signif_cox_coefs.index]
 
-def _unregularized_cph_coefs(z, survival, duration_column, observed_column):
+def _cph_coefs(z, survival, duration_column, observed_column, penalizer=0):
     """Compute one CPH model for each latent factor (column) in z.
     Return summaries (beta values, p values, confidence intervals)
     """
@@ -193,6 +195,6 @@ def _unregularized_cph_coefs(z, survival, duration_column, observed_column):
     except ImportError:
         raise ImportError('The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.')
     return pd.concat([
-        lifelines.CoxPHFitter().fit(survival.assign(LF=z.loc[:,i]).dropna(),
+        lifelines.CoxPHFitter(penalizer=penalizer).fit(survival.assign(LF=z.loc[:,i]).dropna(),
             duration_column, observed_column).summary.loc['LF'].rename(i)
         for i in z.columns], axis=1)
