@@ -12,7 +12,7 @@ Multi-omics Autoencoder Integration (**maui**) is a python package for multi-omi
 
 ## Installation
 
-maui is only tested with Python 3.6, but probably works on 3.5+. The easiest way to install is from pypi:
+maui works with Python 3.6. The easiest way to install is from pypi:
 
 	pip install maui-tools
 
