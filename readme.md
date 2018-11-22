@@ -29,7 +29,7 @@ Survival analysis functionality supplied by lifelines [1]. It may be installed d
 
 ## Usage
 
-Please check out [the documentation](https://maui.readthedocs.io/en/latest/).
+See [the vignette](vignette/maui_vignette.ipynb), and check out [the documentation](https://maui.readthedocs.io/en/latest/).
 
 
 ## Citation
