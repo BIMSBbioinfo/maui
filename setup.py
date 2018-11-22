@@ -1,6 +1,6 @@
 from setuptools import setup
 
-setup(name='maui',
+setup(name='maui-tools',
       version='0.1',
       description="Multi-omics Autoencoder Integration",
       author='Jonathan Ronen',
