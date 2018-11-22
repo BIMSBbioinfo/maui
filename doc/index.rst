@@ -32,7 +32,7 @@ In order to check the model's convergance, the `history` object may be inspected
 
 .. image:: _static/hist.png
 
-For a more comprehensive example, check out `our vignette <https://github.com/bimsbbioinfo/maui>`_.
+For a more comprehensive example, check out `our vignette <https://github.com/BIMSBbioinfo/maui/blob/master/vignette/maui_vignette.ipynb>`_.
 
 
 Indices and tables
