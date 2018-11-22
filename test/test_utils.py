@@ -79,4 +79,25 @@ def test_multivariate_logrank_test():
     survival = pd.DataFrame(dict(duration=durations, observed=observed),
         index=[f'Sample {i}' for i in range(6)])
     test_stat, p_val = utils.multivariate_logrank_test(yhat, survival)
-    assert p_val < 1.
+    assert p_val <= 1.
+
+def test_select_clinical_factors():
+    dummy_z = pd.DataFrame(
+        [
+            [1,1,1,0,0,0,1,0,1],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,1,0,0,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,1,1,1,1],
+            [0,0,0,0,1,0,0,0,0],
+        ],
+        index=[f'sample {i}' for i in range(6)],
+        columns=[f'LF{i}' for i in range(9)]
+    ) # here the first 3 factors separate the groups and the last 6 do not
+
+    durations = [1,2,3,10,20,30] # here the first 3 have short durations, the last 3 longer ones
+    observed = [True]*6 # all events observed
+    survival = pd.DataFrame(dict(duration=durations, observed=observed),
+        index=[f'sample {i}' for i in range(6)])
+
+    utils.select_clinical_factors(dummy_z, survival)

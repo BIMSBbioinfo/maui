@@ -155,3 +155,25 @@ def test_maui_clusters_only_samples_in_y_index_when_optimizing():
 
     yhat = maui_model.cluster(ami_y=y, optimal_k_range=[1,2,3])
     assert set(yhat.index) == set(y.index)
+
+def test_select_clinical_factors():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model.z_ = pd.DataFrame(
+    [
+        [1,1,1,0,0,0,1,0,1],
+        [1,1,1,1,0,1,1,1,0],
+        [1,1,1,1,1,0,0,1,0],
+        [0,0,0,1,0,0,1,1,0],
+        [0,0,0,1,0,1,1,1,1],
+        [0,0,0,0,1,0,0,0,0],
+    ],
+    index=[f'sample {i}' for i in range(6)],
+    columns=[f'LF{i}' for i in range(9)]
+) # here the first 3 factors separate the groups and the last 6 do not
+
+    durations = np.random.poisson(6,6)
+    observed = np.random.randn(6)>.1
+    survival = pd.DataFrame(dict(duration=durations, observed=observed),
+        index=[f'sample {i}' for i in range(6)])
+
+    maui_model.select_clinical_factors(survival)

@@ -200,6 +200,38 @@ class Maui(BaseEstimator):
         return self.aucs_
 
 
+    def select_clinical_factors(self, survival,
+        duration_column='duration', observed_column='observed',
+        alpha=.05):
+        """Select latent factors which are predictive of survival. This is
+        accomplished by fitting a Cox Proportional Hazards (CPH) model to each
+        latent factor, while controlling for known covariates, and only keeping
+        those latent factors whose coefficient in the CPH is nonzero (adjusted
+        p-value < alpha).
+
+        Parameters
+        ----------
+        survival:           pd.DataFrame of survival information and relevant covariates
+                            (such as sex, age at diagnosis, or tumor stage)
+        duration_column:    the name of the column in ``survival`` containing the
+                            duration (time between diagnosis and death or last followup)
+        observed_column:    the name of the column in ``survival`` containing
+                            indicating whether time of death is known
+        alpha:              threshold for p-value of CPH coefficients to call a latent
+                            factor clinically relevant (p < alpha)
+
+        Returns
+        -------
+        z_clinical: pd.DataFrame, subset of the latent factors which have been
+                    determined to have clinical value (are individually predictive
+                    of survival, controlling for covariates)
+        """
+        self.z_clinical_ = maui.utils.select_clinical_factors(self.z_, survival,
+            duration_column=duration_column, observed_column=observed_column,
+            alpha=alpha)
+        return self.z_clinical_
+
+
     def _validate_X(self, X):
         if not isinstance(X, dict):
             raise ValueError("data must be a dict")
