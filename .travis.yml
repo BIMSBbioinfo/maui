@@ -1,0 +1,10 @@
+language: python
+python:
+  - "3.6"
+# command to install dependencies
+install:
+  - pip install lifelines
+  - python setup.py install
+# command to run tests
+script:
+  - pytest -v
