@@ -6,6 +6,15 @@ setup(name='maui',
       author='Jonathan Ronen',
       license='GPLv3',
       author_email='yableeatgmaildotcom',
-      url='',
+      url='https://github.com/BIMSBbioinfo/maui',
       packages=['maui'],
+      install_requires=[
+          'pytest',
+          'numpy',
+          'pandas',
+          'scipy',
+          'scikit-learn',
+          'keras',
+          'tensorflow'
+      ],
 )
