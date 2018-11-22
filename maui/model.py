@@ -232,6 +232,47 @@ class Maui(BaseEstimator):
             alpha=alpha, cox_penalizer=cox_penalizer)
         return self.z_clinical_
 
+    def c_index(self, survival, clinical_only=True,
+        duration_column='duration', observed_column='observed',
+        cox_penalties=[.1,1,10,100,1000,10000],
+        cv_folds=5, sel_clin_alpha=.05, sel_clin_penalty=0):
+        """Compute's Harrell's c-Index for a Cox Proportional Hazards regression modeling
+        survival by the latent factors in z.
+
+        Parameters
+        ----------
+        z:                  pd.DataFrame (n_samples, n_latent factors)
+        survival:           pd.DataFrame of survival information and relevant covariates
+                            (such as sex, age at diagnosis, or tumor stage)
+        clinical_only:      Compute the c-Index for a model containing only
+                            individually clinically relevant latent factors
+                            (see ``select_clinical_factors``)
+        duration_column:    the name of the column in ``survival`` containing the
+                            duration (time between diagnosis and death or last followup)
+        observed_column:    the name of the column in ``survival`` containing
+                            indicating whether time of death is known
+        cox_penalties:      penalty coefficient in Cox PH solver (see ``lifelines.CoxPHFitter``)
+                            to try. Returns the best c given by the different penalties
+                            (by cross-validation)
+        cv_folds:           number of cross-validation folds to compute C
+        sel_clin_penalty:   CPH penalizer to use when selecting clinical factors
+        sel_clin_alpha:     significance level when selecting clinical factors
+
+        Returns
+        -------
+        cs: array, Harrell's c-Index, an auc-like metric for survival prediction accuracy.
+            one value per cv_fold
+
+        """
+        if clinical_only:
+            z = self.select_clinical_factors(survival, duration_column,
+                observed_column, sel_clin_alpha, sel_clin_penalty)
+        else:
+            z = self.z_
+        return maui.utils.compute_harrells_c(z, survival,
+            duration_column, observed_column,
+            cox_penalties, cv_folds)
+
 
     def _validate_X(self, X):
         if not isinstance(X, dict):

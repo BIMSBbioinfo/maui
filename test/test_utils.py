@@ -113,3 +113,32 @@ def test_select_clinical_factors():
     assert 'LF3' not in z_clinical.columns
     assert 'LF4' not in z_clinical.columns
     assert 'LF5' not in z_clinical.columns
+
+def test_compute_harrells_c():
+    dummy_z = pd.DataFrame(
+        [
+            [1,1,1,0,0,0,1,0,1],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,1,0,0,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,1,1,1,1],
+        ],
+        index=[f'sample {i}' for i in range(11)],
+        columns=[f'LF{i}' for i in range(9)]
+    ) # here the first 3 factors separate the groups and the last 6 do not
+
+    durations = [1,2,3,4,5,6, 1000,2000,3000, 4000, 5000] # here the first 3 have short durations, the last 3 longer ones
+    observed = [True]*11 # all events observed
+    survival = pd.DataFrame(dict(duration=durations, observed=observed),
+        index=[f'sample {i}' for i in range(11)])
+    z_clinical = utils.select_clinical_factors(dummy_z, survival, cox_penalizer=1)
+
+    np.random.seed(0)
+    c = utils.compute_harrells_c(z_clinical, survival, cv_folds=2)
+    assert np.allclose(c, [.8,.8])

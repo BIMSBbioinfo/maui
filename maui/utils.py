@@ -198,3 +198,53 @@ def _cph_coefs(z, survival, duration_column, observed_column, penalizer=0):
         lifelines.CoxPHFitter(penalizer=penalizer).fit(survival.assign(LF=z.loc[:,i]).dropna(),
             duration_column, observed_column).summary.loc['LF'].rename(i)
         for i in z.columns], axis=1)
+
+def compute_harrells_c(z, survival, duration_column='duration',
+    observed_column='observed', cox_penalties=[.1,1,10,100,1000,10000],
+    cv_folds=5):
+    """Compute's Harrell's c-Index for a Cox Proportional Hazards regression modeling
+    survival by the latent factors in z.
+
+    Parameters
+    ----------
+    z:                  pd.DataFrame (n_samples, n_latent factors)
+    survival:           pd.DataFrame of survival information and relevant covariates
+                        (such as sex, age at diagnosis, or tumor stage)
+    duration_column:    the name of the column in ``survival`` containing the
+                        duration (time between diagnosis and death or last followup)
+    observed_column:    the name of the column in ``survival`` containing
+                        indicating whether time of death is known
+    cox_penalties:      penalty coefficient in Cox PH solver (see ``lifelines.CoxPHFitter``)
+                        to try. Returns the best c given by the different penalties
+                        (by cross-validation)
+    cv_folds:           number of cross-validation folds to compute C
+
+    Returns
+    -------
+    cs: array, Harrell's c-Index, an auc-like metric for survival prediction accuracy.
+        one value per cv_fold
+
+    """
+    cvcs = [_cv_coxph_c(
+        z,
+        survival,
+        p,
+        duration_column,
+        observed_column,
+        cv_folds) for p in cox_penalties]
+    return cvcs[np.argmax([np.median(e) for e in cvcs])]
+
+def _cv_coxph_c(z, survival, penalty,
+    duration_column='duration', observed_column='observed', cv_folds=5):
+    try:
+        import lifelines
+        import lifelines.utils
+    except ImportError:
+        raise ImportError('The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.')
+
+    cph = lifelines.CoxPHFitter(penalizer=penalty)
+    survdf = pd.concat([survival, z], axis=1, sort=False).dropna()
+
+    scores = lifelines.utils.k_fold_cross_validation(cph,
+        survdf, duration_column, event_col=observed_column, k=cv_folds)
+    return scores
