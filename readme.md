@@ -8,7 +8,7 @@
 
 
 
-Multi-omics Autoencoder Integration (**maui**) is a python package for multi-omics data analysis. It is based on a bayesian latent factor model, with inference done using artifiaial neural networks. For details, check out our pre-print on bioRxiv: https://www.biorxiv.org/content/early/2018/11/12/464743
+Multi-omics Autoencoder Integration (**maui**) is a python package for multi-omics data analysis. It is based on a bayesian latent factor model, with inference done using artificial neural networks. For details, check out our pre-print on bioRxiv: https://www.biorxiv.org/content/early/2018/11/12/464743
 
 ## Installation
 
@@ -25,7 +25,7 @@ The development version may be installed by cloning this repo and running `pytho
 
 #### Optional dependencies
 
-Survival analysis functionality supplied by lifelines [1]. It may be installed directly from pip using `pip isntall lifelines`.
+Survival analysis functionality supplied by lifelines [1]. It may be installed directly from pip using `pip install lifelines`.
 
 ## Usage
 
