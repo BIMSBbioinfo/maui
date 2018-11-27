@@ -42,7 +42,7 @@ Open an issue, send us a pull request, or shoot us an e-mail.
 
 ## License
 
-maui is released under the GPLv3 [licence](LICENSE).
+maui is released under the GNU General Public License v3.0 or later [licence](LICENSE).
 
 ---------------------
 @jonathanronen, BIMSBbioinfo, 2018
