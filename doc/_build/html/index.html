@@ -14,9 +14,10 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="_static/icons8-beach-30.png"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="The Maui Class" href="maui.html" />
+    <link rel="next" title="Multi-modal Autoencoders" href="autoencoder-integration.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -40,13 +41,14 @@
 <h2>Table of contents<a class="headerlink" href="#table-of-contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="maui.html">The Maui Class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">Maui Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="autoencoder-integration.html">Multi-modal Autoencoders</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="autoencoder-integration.html#variational-autoencoders">Variational Autoencoders</a></li>
 <li class="toctree-l2"><a class="reference internal" href="autoencoder-integration.html#stacked-autoencoders">Stacked Autoencoders</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="data-normalization.html">Data and Normalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="maui.html">The Maui Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Maui Utilities</a></li>
 </ul>
 </div>
 </div>
@@ -60,7 +62,7 @@
 </pre></div>
 </div>
 <p>This will instantiate a maui model with one hidden layer of 900 nodes, and a middle layer of 70 nodes, which will be traiend for 100 epochs. It then feeds the multi-omics data in <code class="docutils literal notranslate"><span class="pre">gex</span></code>, <code class="docutils literal notranslate"><span class="pre">mut</span></code>, and <code class="docutils literal notranslate"><span class="pre">cnv</span></code> to the fitting procedure. The omics data (<code class="docutils literal notranslate"><span class="pre">gex</span></code> et. al.) are <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> objects of dimension (n_features, n_samples). The return object <code class="docutils literal notranslate"><span class="pre">z</span></code> is a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code> (n_samples, n_latent), and may be used for further analysis.</p>
-<p>In order to check the model’s convergance, the <cite>history</cite> object may be inspected, and plotted:</p>
+<p>In order to check the model’s convergance, the <code class="docutils literal notranslate"><span class="pre">hist</span></code> object may be inspected, and plotted:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">maui_model</span><span class="o">.</span><span class="n">hist</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -98,16 +100,17 @@
 
 <h3>Navigation</h3>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="autoencoder-integration.html">Multi-modal Autoencoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data-normalization.html">Data and Normalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maui.html">The Maui Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Maui Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autoencoder-integration.html">Multi-modal Autoencoders</a></li>
 </ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="#">Documentation overview</a><ul>
-      <li>Next: <a href="maui.html" title="next chapter">The Maui Class</a></li>
+      <li>Next: <a href="autoencoder-integration.html" title="next chapter">Multi-modal Autoencoders</a></li>
   </ul></li>
 </ul>
 </div>

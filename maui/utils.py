@@ -259,7 +259,7 @@ def scale(df):
 
     Returns
     -------
-    df:     pd.DataFrame (n_features, n_samples) scaled data
+    scaled: pd.DataFrame (n_features, n_samples) scaled data
     """
     df_scaled = StandardScaler().fit_transform(df.T)
     return pd.DataFrame(df_scaled,

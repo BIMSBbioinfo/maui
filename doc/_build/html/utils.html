@@ -14,9 +14,9 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="_static/icons8-beach-30.png"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Multi-modal Autoencoders" href="autoencoder-integration.html" />
     <link rel="prev" title="The Maui Class" href="maui.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -138,6 +138,15 @@ p_value:            the associated p_value</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="maui.utils.scale">
+<code class="descclassname">maui.utils.</code><code class="descname">scale</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#scale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scale and center data</p>
+<p>Parameters:</p>
+<p>df:     pd.DataFrame (n_features, n_samples) non-scaled data</p>
+<p>pd.DataFrame (n_features, n_samples) scaled data</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="maui.utils.select_clinical_factors">
 <code class="descclassname">maui.utils.</code><code class="descname">select_clinical_factors</code><span class="sig-paren">(</span><em>z</em>, <em>survival</em>, <em>duration_column='duration'</em>, <em>observed_column='observed'</em>, <em>alpha=0.05</em>, <em>cox_penalizer=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#select_clinical_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.select_clinical_factors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Select latent factors which are predictive of survival. This is
@@ -186,9 +195,10 @@ of survival, controlling for covariates)</dd>
 
 <h3>Navigation</h3>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="autoencoder-integration.html">Multi-modal Autoencoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data-normalization.html">Data and Normalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maui.html">The Maui Class</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Maui Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="autoencoder-integration.html">Multi-modal Autoencoders</a></li>
 </ul>
 
 <div class="relations">
@@ -196,7 +206,6 @@ of survival, controlling for covariates)</dd>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="maui.html" title="previous chapter">The Maui Class</a></li>
-      <li>Next: <a href="autoencoder-integration.html" title="next chapter">Multi-modal Autoencoders</a></li>
   </ul></li>
 </ul>
 </div>

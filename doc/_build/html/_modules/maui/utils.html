@@ -14,6 +14,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="../../_static/icons8-beach-30.png"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
    
@@ -45,6 +46,7 @@
 <span class="kn">from</span> <span class="nn">sklearn.svm</span> <span class="k">import</span> <span class="n">LinearSVC</span>
 <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="k">import</span> <span class="n">roc_curve</span><span class="p">,</span> <span class="n">auc</span>
 <span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="k">import</span> <span class="n">label_binarize</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="k">import</span> <span class="n">StandardScaler</span>
 <span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">cross_val_predict</span>
 
 <div class="viewcode-block" id="map_factors_to_features"><a class="viewcode-back" href="../../utils.html#maui.utils.map_factors_to_features">[docs]</a><span class="k">def</span> <span class="nf">map_factors_to_features</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">concatenated_data</span><span class="p">,</span> <span class="n">pval_threshold</span><span class="o">=.</span><span class="mi">001</span><span class="p">):</span>
@@ -283,6 +285,23 @@
     <span class="n">scores</span> <span class="o">=</span> <span class="n">lifelines</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">k_fold_cross_validation</span><span class="p">(</span><span class="n">cph</span><span class="p">,</span>
         <span class="n">survdf</span><span class="p">,</span> <span class="n">duration_column</span><span class="p">,</span> <span class="n">event_col</span><span class="o">=</span><span class="n">observed_column</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">cv_folds</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">scores</span>
+
+<div class="viewcode-block" id="scale"><a class="viewcode-back" href="../../utils.html#maui.utils.scale">[docs]</a><span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scale and center data</span>
+
+<span class="sd">    Parameters:</span>
+
+<span class="sd">    df:     pd.DataFrame (n_features, n_samples) non-scaled data</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    pd.DataFrame (n_features, n_samples) scaled data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">df_scaled</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">df_scaled</span><span class="p">,</span>
+        <span class="n">columns</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+        <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="o">.</span><span class="n">T</span></div>
 </pre></div>
 
           </div>
@@ -305,9 +324,10 @@
 
 <h3>Navigation</h3>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../autoencoder-integration.html">Multi-modal Autoencoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../data-normalization.html">Data and Normalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../maui.html">The Maui Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../utils.html">Maui Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../autoencoder-integration.html">Multi-modal Autoencoders</a></li>
 </ul>
 
 <div class="relations">

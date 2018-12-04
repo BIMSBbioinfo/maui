@@ -10,9 +10,10 @@ Table of contents
 .. toctree::
    :maxdepth: 2
 
+   autoencoder-integration
+   data-normalization
    maui
    utils
-   autoencoder-integration
 
 
 
@@ -30,7 +31,7 @@ The ``Maui`` class implements ``scikit-learn``'s ``BaseEstimator``. In order to 
 
 This will instantiate a maui model with one hidden layer of 900 nodes, and a middle layer of 70 nodes, which will be traiend for 100 epochs. It then feeds the multi-omics data in ``gex``, ``mut``, and ``cnv`` to the fitting procedure. The omics data (``gex`` et. al.) are ``pandas.DataFrame`` objects of dimension (n_features, n_samples). The return object ``z`` is a ``pandas.DataFrame`` (n_samples, n_latent), and may be used for further analysis.
 
-In order to check the model's convergance, the `history` object may be inspected, and plotted:
+In order to check the model's convergance, the ``hist`` object may be inspected, and plotted:
 
 .. code-block:: python
 

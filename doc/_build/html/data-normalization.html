@@ -6,31 +6,24 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Search &#8212;  0.1 documentation</title>
+    <title>Data and Normalization &#8212;  0.1 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="_static/searchtools.js"></script>
     <link rel="shortcut icon" href="_static/icons8-beach-30.png"/>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="#" />
-  <script type="text/javascript">
-    jQuery(function() { Search.loadIndex("searchindex.js"); });
-  </script>
-  
-  <script type="text/javascript" id="searchindexloader"></script>
-  
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The Maui Class" href="maui.html" />
+    <link rel="prev" title="Multi-modal Autoencoders" href="autoencoder-integration.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
 
   </head><body>
   
@@ -42,29 +35,20 @@
 
           <div class="body" role="main">
             
-  <h1 id="search-documentation">Search</h1>
-  <div id="fallback" class="admonition warning">
-  <script type="text/javascript">$('#fallback').hide();</script>
-  <p>
-    Please activate JavaScript to enable the search
-    functionality.
-  </p>
-  </div>
-  <p>
-    From here you can search these documents. Enter your search
-    words into the box below and click "search". Note that the search
-    function will automatically search for all of the words. Pages
-    containing fewer words won't appear in the result list.
-  </p>
-  <form action="" method="get">
-    <input type="text" name="q" value="" />
-    <input type="submit" value="search" />
-    <span id="search-progress" style="padding-left: 10px"></span>
-  </form>
-  
-  <div id="search-results">
-  
-  </div>
+  <div class="section" id="data-and-normalization">
+<h1>Data and Normalization<a class="headerlink" href="#data-and-normalization" title="Permalink to this headline">¶</a></h1>
+<p>All features need to be scaled and centered prior to feeding to the neural network of maui. This limitation comes from the fact that the last layer, where the input data is reconstructed, uses Sigmoid activations. Maui uses Batch Normalization during training, where each input feature is normalized at each minibatch. We still recommend that data be scaled prior to training. We provide a function that does this in the <a class="reference internal" href="utils.html"><span class="doc">Maui Utilities</span></a>.</p>
+<dl class="function">
+<dt id="maui.utils.scale">
+<code class="descclassname">maui.utils.</code><code class="descname">scale</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#scale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scale and center data</p>
+<p>Parameters:</p>
+<p>df:     pd.DataFrame (n_features, n_samples) non-scaled data</p>
+<p>pd.DataFrame (n_features, n_samples) scaled data</p>
+</dd></dl>
+
+</div>
+
 
           </div>
           
@@ -85,9 +69,9 @@
 
 
 <h3>Navigation</h3>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="autoencoder-integration.html">Multi-modal Autoencoders</a></li>
-<li class="toctree-l1"><a class="reference internal" href="data-normalization.html">Data and Normalization</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Data and Normalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maui.html">The Maui Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Maui Utilities</a></li>
 </ul>
@@ -96,9 +80,23 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="autoencoder-integration.html" title="previous chapter">Multi-modal Autoencoders</a></li>
+      <li>Next: <a href="maui.html" title="next chapter">The Maui Class</a></li>
   </ul></li>
 </ul>
 </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
 
 
 
@@ -118,6 +116,9 @@
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
+      |
+      <a href="_sources/data-normalization.rst.txt"
+          rel="nofollow">Page source</a>
     </div>
 
     
