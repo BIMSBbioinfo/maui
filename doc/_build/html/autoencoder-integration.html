@@ -1,0 +1,141 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Multi-modal Autoencoders &#8212;  0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Maui Utilities" href="utils.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="multi-modal-autoencoders">
+<h1>Multi-modal Autoencoders<a class="headerlink" href="#multi-modal-autoencoders" title="Permalink to this headline">¶</a></h1>
+<p>Autoencoders are hourglass-shaped neural networks that are trained to reconstruct the input data after passing it through a bottleneck layer. Thereby, autoencoders learn an efficient lower dimension representation of high-dimensional data, a “latent factor” representation of the data. The  Multi-modal autoencoders take data from different modalities and learn latent factor representations of the data. In the figure below, the direction of data flow is left to right. The three different-colored matrices on the left represent data from three different modalities. The three matrices on the right represent the reconstruction of the input data, and the mixed-color matrix on the bottom represents the latent factor view of the data.</p>
+<div class="figure">
+<img alt="_images/integration-autoencoder.png" src="_images/integration-autoencoder.png" />
+</div>
+<p>Integration Autoencoder</p>
+<div class="section" id="variational-autoencoders">
+<h2>Variational Autoencoders<a class="headerlink" href="#variational-autoencoders" title="Permalink to this headline">¶</a></h2>
+<p>Maui uses a Variational Autoencoder, which means it learns a bayesian latent variable model. This is achieved by minimizing the following loss function:</p>
+<p><span class="math notranslate nohighlight">\(\mathcal{L} = -\mathbf{E}_{q(z|x)}\big[ log(p(x|z)) \big] + D_{KL}\big( q(z|x)~\|~p(z) \big)\)</span></p>
+<p>The first term represents the cross-entropy reconstruction loss, and the second term is the Kullback-Leibler divergence between the latent factors distribution and a gaussian prior <span class="math notranslate nohighlight">\(p(z)\)</span>.</p>
+</div>
+<div class="section" id="stacked-autoencoders">
+<h2>Stacked Autoencoders<a class="headerlink" href="#stacked-autoencoders" title="Permalink to this headline">¶</a></h2>
+<p>As the figure above indicates, it is possible to insert extra layers between the input and the bottleneck layers, and between the bottleneck and the output layers. This is sometimes called stacked autoencoders. <a class="reference internal" href="maui.html"><span class="doc">The Maui Class</span></a> allows this architecture to be varied when instantiating the model, using the <code class="docutils literal notranslate"><span class="pre">n_hidden</span></code> parameter. The <code class="docutils literal notranslate"><span class="pre">n_latent</span></code> parameter determines the size of the bottleneck layer (latent factor layer).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">maui_model</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">Maui</span><span class="p">(</span><span class="n">n_hidden</span><span class="o">=</span><span class="p">[</span><span class="mi">900</span><span class="p">],</span> <span class="n">n_latent</span><span class="o">=</span><span class="mi">70</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>instantiates a Maui model with one hidden layer with 900 units, and 70 units in the bottleneck layer, while</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">maui_model</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">Maui</span><span class="p">(</span><span class="n">n_hidden</span><span class="o">=</span><span class="p">[</span><span class="mi">1300</span><span class="p">,</span> <span class="mi">900</span><span class="p">],</span> <span class="n">n_latent</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>will instantiate a maui model with two hidden layers with 1300 and 900 units, respectively.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/hex-maui.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="index.html"></a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="maui.html">The Maui Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Maui Utilities</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Multi-modal Autoencoders</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#variational-autoencoders">Variational Autoencoders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#stacked-autoencoders">Stacked Autoencoders</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="utils.html" title="previous chapter">Maui Utilities</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Jonathan Ronen, Altuna Akalin.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/autoencoder-integration.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
