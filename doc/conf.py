@@ -89,6 +89,7 @@ html_theme_options = {
 }
 
 html_logo = '../hex-maui.png'
+html_favicon = '_static/icons8-beach-30.png'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
