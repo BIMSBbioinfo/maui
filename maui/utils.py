@@ -10,6 +10,7 @@ from scipy import interp
 from sklearn.svm import LinearSVC
 from sklearn.metrics import roc_curve, auc
 from sklearn.preprocessing import label_binarize
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_predict
 
 def map_factors_to_features(z, concatenated_data, pval_threshold=.001):
@@ -248,3 +249,19 @@ def _cv_coxph_c(z, survival, penalty,
     scores = lifelines.utils.k_fold_cross_validation(cph,
         survdf, duration_column, event_col=observed_column, k=cv_folds)
     return scores
+
+def scale(df):
+    """Scale and center data
+
+    Parameters
+    ----------
+    df:     pd.DataFrame (n_features, n_samples) non-scaled data
+
+    Returns
+    -------
+    df:     pd.DataFrame (n_features, n_samples) scaled data
+    """
+    df_scaled = StandardScaler().fit_transform(df.T)
+    return pd.DataFrame(df_scaled,
+        columns=df.index,
+        index=df.columns).T
