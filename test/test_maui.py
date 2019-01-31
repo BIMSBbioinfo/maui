@@ -215,3 +215,12 @@ def test_maui_computes_harrells_c():
         cv_folds=2, sel_clin_alpha=.05, sel_clin_penalty=1)
     print(cs)
     assert np.allclose(cs, [.8,.8])
+
+def test_maui_produces_same_prediction_when_run_twice():
+    """This is to show the maui encoder model picks the mean of
+    the distribution, not a sample."""
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model = maui_model.fit({'d1': df1, 'd2': df2})
+    z1 = maui_model.transform({'d1': df1, 'd2': df2})
+    z2 = maui_model.transform({'d1': df1, 'd2': df2})
+    assert np.allclose(z1, z2)

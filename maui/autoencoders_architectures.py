@@ -87,9 +87,11 @@ def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, beta_val=0, l
     rnaseq_input = Input(shape=(original_dim, ))
 
     prev = rnaseq_input
+    encoder_target = rnaseq_input
     for hidden_dim in hidden_dims:
         # variational layer for hidden dim
-        z_mean_dense_linear = Dense(hidden_dim, kernel_initializer='glorot_uniform')(prev)
+        z_mean_component = Dense(hidden_dim, kernel_initializer='glorot_uniform')
+        z_mean_dense_linear = z_mean_component(prev)
         z_mean_dense_batchnorm = BatchNormalization()(z_mean_dense_linear)
         z_mean_encoded = Activation('relu')(z_mean_dense_batchnorm)
 
@@ -101,8 +103,12 @@ def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, beta_val=0, l
         z = Lambda(sampling, output_shape=(hidden_dim, ))([z_mean_encoded, z_log_var_encoded])
         prev = z
 
+        # the encoder part to have a path that doesn't do sampling or ReLU'ing
+        encoder_target = z_mean_component(encoder_target)
+
     # variational layer for latent dim
-    l_mean_dense_linear = Dense(latent_dim, kernel_initializer='glorot_uniform')(z)
+    l_mean_component = Dense(latent_dim, kernel_initializer='glorot_uniform')
+    l_mean_dense_linear = l_mean_component(z)
     l_mean_dense_batchnorm = BatchNormalization()(l_mean_dense_linear)
     l_mean_encoded = Activation('relu')(l_mean_dense_batchnorm)
 
@@ -110,6 +116,9 @@ def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, beta_val=0, l
     l_log_var_dense_batchnorm = BatchNormalization()(l_log_var_dense_linear)
     l_log_var_encoded = Activation('relu')(l_log_var_dense_batchnorm)
     l = Lambda(sampling, output_shape=(latent_dim,))([l_mean_encoded, l_log_var_encoded])
+
+    # the encoder part's l to come from the path that only considers mean
+    encoder_target = l_mean_component(encoder_target)
 
     # decoder latent->hidden
     prev = l
@@ -133,8 +142,11 @@ def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, beta_val=0, l
                    validation_data=(np.array(x_val), None),
                    callbacks=[LadderCallback(beta, kappa)])
     
-    # Model to compress input
-    encoder = Model(rnaseq_input, l_mean_encoded)
+    # non-sampling encoder
+    encoder = Model(rnaseq_input, encoder_target)
+
+    # sampling encoder
+    sampling_encoder = Model(rnaseq_input, l)
 
     # Also, create a decoder model
     encoded_input = Input(shape=(latent_dim,))
@@ -143,4 +155,4 @@ def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, beta_val=0, l
         prev = vae.layers[-(i+2)](prev)
     decoder = Model(encoded_input, prev)
     
-    return hist, vae, encoder, decoder
+    return hist, vae, encoder, sampling_encoder, decoder

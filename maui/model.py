@@ -54,25 +54,31 @@ class Maui(BaseEstimator):
         """
         self.x_ = self._dict2array(X)
         x_test = self._dict2array(X_validation) if X_validation else self.x_
-        hist, vae, encoder, decoder = stacked_vae(
+        hist, vae, encoder, sampling_encoder, decoder = stacked_vae(
             self.x_, x_test,
             hidden_dims=self.n_hidden, latent_dim=self.n_latent,
             batch_size=self.batch_size, epochs=self.epochs)
         self.hist = pd.DataFrame(hist.history)
         self.vae = vae
         self.encoder = encoder
+        self.sampling_encoder = sampling_encoder
         self.decoder = decoder
         return self
 
-    def transform(self, X):
+    def transform(self, X, encoder='mean'):
         """Transform X into the latent space that was previously learned using
         `fit` or `fit_transform`, and return the latent factor representation.
 
         Parameters
         ----------
-        X:  dict with multi-modal dataframes, containing training data, e.g.
-            {'mRNA': df1, 'SNP': df2},
-            df1, df2, etc. are (n_features, n_samples) pandas.DataFrame's.
+        X:          dict with multi-modal dataframes, containing training data, e.g.
+                    {'mRNA': df1, 'SNP': df2},
+                    df1, df2, etc. are (n_features, n_samples) pandas.DataFrame's.
+        encoder:    the mode of the encoder to be used. one of 'mean' or 'sample',
+                    where 'mean' indicates the encoder network only uses the mean
+                    estimates for each successive layer. 'sample' indicates the
+                    encoder should sample from the distribution specified from each
+                    successive layer, and results in non-reproducible embeddings.
 
         Returns
         -------
