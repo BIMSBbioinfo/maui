@@ -85,14 +85,21 @@ class Maui(BaseEstimator):
         z:  DataFrame (n_samples, n_latent_factors)
             Latent factors representation of the data X.
         """
+        if encoder == 'mean':
+            the_encoder = self.encoder
+        elif encoder == 'sample':
+            the_encoder = self.sampling_encoder
+        else:
+            raise ValueError("`encoder` must be one of 'mean' or 'sample'")
+
         self.x_ = self._dict2array(X)
-        self.z_ = pd.DataFrame(self.encoder.predict(self.x_),
+        self.z_ = pd.DataFrame(the_encoder.predict(self.x_),
             index=self.x_.index,
             columns=[f'LF{i}' for i in range(1,self.n_latent+1)])
         self.feature_correlations = maui.utils.map_factors_to_features(self.z_, self.x_)
         return self.z_
 
-    def fit_transform(self, X, y=None, X_validation=None):
+    def fit_transform(self, X, y=None, X_validation=None, encoder='mean'):
         """Train autoencoder model, and return the latent factor representation
         of the data X.
 
@@ -112,7 +119,7 @@ class Maui(BaseEstimator):
             Latent factors representation of the data X.
         """
         self.fit(X, X_validation=X_validation, y=y)
-        return self.transform(X)
+        return self.transform(X, encoder=encoder)
 
     def cluster(self, k=None, optimal_k_method='ami',
         optimal_k_range=range(3,10), ami_y=None,
