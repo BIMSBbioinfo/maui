@@ -1,6 +1,7 @@
 import maui.utils
 import numpy as np
 import pandas as pd
+from functools import partial
 from sklearn.cluster import KMeans
 from sklearn.base import BaseEstimator
 from .autoencoders_architectures import stacked_vae
@@ -26,14 +27,26 @@ class Maui(BaseEstimator):
 
     epochs: int (default 400)
         The number of epoches to use for training the network
+
+    architecture:
+        One of 'stacked' or 'deep'. If 'stacked', will use a stacked VAE model, where
+        the intermediate layers are also variational. If 'deep', will train a deep VAE
+        where the intermediate layers are regular (ReLU) units, and only the middle
+        (latent) layer is variational.
     """
 
-    def __init__(self, n_hidden=[1500], n_latent=80, batch_size=100, epochs=400):
-
+    def __init__(self, n_hidden=[1500], n_latent=80, batch_size=100,
+        epochs=400, architecture='stacked', **kwargs):
         self.n_hidden = n_hidden
         self.n_latent = n_latent
         self.batch_size = batch_size
         self.epochs = epochs
+        if architecture == 'stacked':
+            self.architecture = partial(stacked_vae, **kwargs)
+        elif architecture == 'deep':
+            self.architecture = partial(deep_vae, **kwargs)
+        else:
+            raise ValueError("architecture must be one of 'stacked' or 'deep'")
 
     def fit(self, X, y=None, X_validation=None):
         """Train autoencoder model
@@ -54,7 +67,7 @@ class Maui(BaseEstimator):
         """
         self.x_ = self._dict2array(X)
         x_test = self._dict2array(X_validation) if X_validation else self.x_
-        hist, vae, encoder, sampling_encoder, decoder = stacked_vae(
+        hist, vae, encoder, sampling_encoder, decoder = self.architecture(
             self.x_, x_test,
             hidden_dims=self.n_hidden, latent_dim=self.n_latent,
             batch_size=self.batch_size, epochs=self.epochs)
