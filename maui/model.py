@@ -4,7 +4,7 @@ import pandas as pd
 from functools import partial
 from sklearn.cluster import KMeans
 from sklearn.base import BaseEstimator
-from .autoencoders_architectures import stacked_vae
+from .autoencoders_architectures import stacked_vae, deep_vae
 
 
 class Maui(BaseEstimator):

@@ -245,3 +245,11 @@ def test_maui_produces_pos_and_neg_zs_if_relu_embedding_false():
     maui_model = maui_model.fit({'d1': df1, 'd2': df2})
     z1 = maui_model.transform({'d1': df1, 'd2': df2})
     assert not np.all(z1>=0)
+
+def test_maui_runs_with_deep_not_stacked_vae():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1, architecture='deep')
+    z = maui_model.fit_transform({'d1': df1, 'd2': df2})
+
+def test_maui_complains_if_wrong_architecture():
+    with pytest.raises(ValueError):
+        maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1, architecture='wrong value')
