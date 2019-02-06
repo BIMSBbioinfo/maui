@@ -225,6 +225,15 @@ def test_maui_produces_same_prediction_when_run_twice():
     z2 = maui_model.transform({'d1': df1, 'd2': df2})
     assert np.allclose(z1, z2)
 
+def test_maui_produces_different_prediction_when_run_twice_with_sampling():
+    """This is to show the maui encoder model picks the mean of
+    the distribution, not a sample."""
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model = maui_model.fit({'d1': df1, 'd2': df2})
+    z1 = maui_model.transform({'d1': df1, 'd2': df2}, encoder='sample')
+    z2 = maui_model.transform({'d1': df1, 'd2': df2}, encoder='sample')
+    assert not np.allclose(z1, z2)
+
 def test_maui_produces_nonnegative_zs_if_relu_embedding_true():
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1, relu_embedding=True)
     maui_model = maui_model.fit({'d1': df1, 'd2': df2})
