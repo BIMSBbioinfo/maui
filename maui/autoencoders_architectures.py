@@ -12,10 +12,10 @@ from keras.callbacks import Callback, TensorBoard
 from keras.layers.normalization import BatchNormalization
 from keras.layers import Input, Dense, Lambda, Layer, Activation, Concatenate
 
-def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, beta_val=0, learning_rate=.0005,
+def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, initial_beta_val=0, learning_rate=.0005,
     epsilon_std=1., kappa=1., epochs=50, batch_size=50, batch_normalize_inputs=True,
     batch_normalize_intermediaries=False, batch_normalize_embedding=False,
-    relu_intermediaries=False, relu_embedding=False):
+    relu_intermediaries=False, relu_embedding=False, max_beta_val=1):
     """
     This is a deep, or stacked, vae.
     `hidden_dims` denotes the size of each successive hidden layer,
@@ -80,7 +80,7 @@ def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, beta_val=0, l
 
 
     # Init beta value
-    beta = K.variable(beta_val)
+    beta = K.variable(initial_beta_val)
     
     # Input place holder for RNAseq data with specific input size
     original_dim = x_train.shape[1]
@@ -183,7 +183,7 @@ def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, beta_val=0, l
                    verbose=0,
                    batch_size=batch_size,
                    validation_data=(np.array(x_val), None),
-                   callbacks=[LadderCallback(beta, kappa)])
+                   callbacks=[LadderCallback(beta, kappa, max_beta_val)])
     
     # non-sampling encoder
     encoder = Model(rnaseq_input, encoder_target)
@@ -201,10 +201,10 @@ def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, beta_val=0, l
     return hist, vae, encoder, sampling_encoder, decoder
 
 
-def deep_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, beta_val=0, learning_rate=.0005,
+def deep_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, initial_beta_val=0, learning_rate=.0005,
     epsilon_std=1., kappa=1., epochs=50, batch_size=50,
     batch_normalize_inputs=True, batch_normalize_embedding=False,
-    relu_embedding=False):
+    relu_embedding=False, max_beta_val=1):
     """
     This is a deep, not stacked, vae.
     `hidden_dims` denotes the size of each successive hidden layer,
@@ -267,7 +267,7 @@ def deep_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, beta_val=0, lear
 
 
     # Init beta value
-    beta = K.variable(beta_val)
+    beta = K.variable(initial_beta_val)
 
     # Input place holder for RNAseq data with specific input size
     original_dim = x_train.shape[1]
@@ -340,7 +340,7 @@ def deep_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, beta_val=0, lear
                    verbose=0,
                    batch_size=batch_size,
                    validation_data=(np.array(x_val), None),
-                   callbacks=[LadderCallback(beta, kappa)])
+                   callbacks=[LadderCallback(beta, kappa, max_beta_val)])
 
     # non-sampling encoder
     encoder = Model(rnaseq_input, encoder_target)
