@@ -18,7 +18,7 @@ setup(name='maui-tools',
     long_description_content_type="text/markdown",
     install_requires=[
         'pytest',
-        'numpy',
+        'numpy>=1.14.5',
         'pandas',
         'scipy',
         'scikit-learn',
