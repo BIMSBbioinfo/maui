@@ -23,6 +23,7 @@ setup(name='maui-tools',
         'scipy',
         'scikit-learn',
         'keras',
-        'tensorflow'
+        'tensorflow',
+        'pytest>=3.6.0'
     ],
 )
