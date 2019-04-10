@@ -45,8 +45,8 @@ def make_variational_layer(input_layer, size, batch_normalize_intermediaries,
 
 def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, initial_beta_val=0, learning_rate=.0005,
     epsilon_std=1., kappa=1., epochs=50, batch_size=50, batch_normalize_inputs=True,
-    batch_normalize_intermediaries=False, batch_normalize_embedding=False,
-    relu_intermediaries=False, relu_embedding=False, max_beta_val=1):
+    batch_normalize_intermediaries=True, batch_normalize_embedding=True,
+    relu_intermediaries=True, relu_embedding=True, max_beta_val=1):
     """
     This is a deep, or stacked, vae.
     `hidden_dims` denotes the size of each successive hidden layer,
