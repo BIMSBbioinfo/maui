@@ -3,8 +3,11 @@ from setuptools import setup
 with open("readme.md", "r") as fh:
     long_description = fh.read()
 
+with open('maui/_version.py') as versionfile:
+    exec(versionfile.read())
+
 setup(name='maui-tools',
-    version='0.1.2',
+    version=__version__,
     description="Multi-omics Autoencoder Integration",
     author='Jonathan Ronen',
     license='GPLv3',
