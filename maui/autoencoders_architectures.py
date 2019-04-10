@@ -294,9 +294,12 @@ def deep_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, initial_beta_val
         batchnorm_input = rnaseq_input
 
     prev = batchnorm_input
-    for hidden_dim in hidden_dims:
-        z = Dense(hidden_dim, activation='relu')(prev)
-        prev = z
+    if hidden_dims:
+        for hidden_dim in hidden_dims:
+            z = Dense(hidden_dim, activation='relu')(prev)
+            prev = z
+    else:
+        z = prev
 
     # variational layer for latent dim
     l_mean_component = Dense(latent_dim, kernel_initializer='glorot_uniform')
@@ -334,10 +337,14 @@ def deep_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, initial_beta_val
         encoder_target = Activation('relu')(encoder_target)
 
     # decoder latent->hidden
-    prev = l
-    for hidden_dim in reversed(hidden_dims):
-        h = Dense(hidden_dim, kernel_initializer='glorot_uniform', activation='relu')(prev)
-        prev = h
+    if hidden_dims:
+        prev = l
+        for hidden_dim in reversed(hidden_dims):
+            h = Dense(hidden_dim, kernel_initializer='glorot_uniform', activation='relu')(prev)
+            prev = h
+    else:
+        h = l
+
     reconstruction = Dense(original_dim, kernel_initializer='glorot_uniform', activation='sigmoid')(h)
 
     adam = optimizers.Adam(lr=learning_rate)
@@ -364,8 +371,9 @@ def deep_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, initial_beta_val
     # Also, create a decoder model
     encoded_input = Input(shape=(latent_dim,))
     prev = encoded_input
-    for i in reversed(range(len(hidden_dims)+1)):
-        prev = vae.layers[-(i+2)](prev)
+    if hidden_dims:
+        for i in reversed(range(len(hidden_dims)+1)):
+            prev = vae.layers[-(i+2)](prev)
     decoder = Model(encoded_input, prev)
 
     return hist, vae, encoder, sampling_encoder, decoder

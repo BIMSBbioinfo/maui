@@ -258,3 +258,7 @@ def test_maui_supports_single_layer_vae():
     maui_model = Maui(n_hidden=None, n_latent=2, epochs=1)
     maui_model = maui_model.fit({'d1': df1, 'd2': df2})
     z1 = maui_model.transform({'d1': df1, 'd2': df2})
+
+def test_maui_supports_not_deep_deep_vae():
+    maui_model = Maui(n_hidden=None, n_latent=2, epochs=1, architecture='deep')
+    z = maui_model.fit_transform({'d1': df1, 'd2': df2})
