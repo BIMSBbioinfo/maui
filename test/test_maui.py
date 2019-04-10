@@ -253,3 +253,8 @@ def test_maui_runs_with_deep_not_stacked_vae():
 def test_maui_complains_if_wrong_architecture():
     with pytest.raises(ValueError):
         maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1, architecture='wrong value')
+
+def test_maui_supports_single_layer_vae():
+    maui_model = Maui(n_hidden=None, n_latent=2, epochs=1)
+    maui_model = maui_model.fit({'d1': df1, 'd2': df2})
+    z1 = maui_model.transform({'d1': df1, 'd2': df2})

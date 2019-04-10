@@ -12,6 +12,37 @@ from keras.callbacks import Callback, TensorBoard
 from keras.layers.normalization import BatchNormalization
 from keras.layers import Input, Dense, Lambda, Layer, Activation, Concatenate
 
+def make_variational_layer(input_layer, size, batch_normalize_intermediaries,
+    relu_intermediaries, sampling_function):
+        # variational layer for hidden dim
+        z_mean_component = Dense(size, kernel_initializer='glorot_uniform')
+        z_mean_dense_linear = z_mean_component(input_layer)
+
+        if batch_normalize_intermediaries:
+            z_mean_dense_batchnorm = BatchNormalization()(z_mean_dense_linear)
+        else: z_mean_dense_batchnorm = z_mean_dense_linear
+
+        if relu_intermediaries:
+            z_mean_encoded = Activation('relu')(z_mean_dense_batchnorm)
+        else:
+            z_mean_encoded = z_mean_dense_batchnorm
+
+        z_log_var_dense_linear = Dense(size, kernel_initializer='glorot_uniform')(input_layer)
+
+        if batch_normalize_intermediaries:
+            z_log_var_dense_batchnorm = BatchNormalization()(z_log_var_dense_linear)
+        else:
+            z_log_var_dense_batchnorm = z_log_var_dense_linear
+
+        if relu_intermediaries:
+            z_log_var_encoded = Activation('relu')(z_log_var_dense_batchnorm)
+        else:
+            z_log_var_encoded = z_log_var_dense_batchnorm
+
+        # return the encoded and randomly sampled z vector (hidden layer 1)
+        z = Lambda(sampling_function, output_shape=(size, ))([z_mean_encoded, z_log_var_encoded])
+        return z, z_mean_component
+
 def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, initial_beta_val=0, learning_rate=.0005,
     epsilon_std=1., kappa=1., epochs=50, batch_size=50, batch_normalize_inputs=True,
     batch_normalize_intermediaries=False, batch_normalize_embedding=False,
@@ -51,8 +82,8 @@ def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, initial_beta_
 
         def vae_loss(self, x_input, x_decoded):
             reconstruction_loss = original_dim * metrics.binary_crossentropy(x_input, x_decoded)
-            kl_loss = - 0.5 * K.sum(1 + z_log_var_dense_linear - K.square(z_mean_dense_linear) -
-                                    K.exp(z_log_var_dense_linear), axis=-1)
+            kl_loss = - 0.5 * K.sum(1 + l_log_var_dense_linear - K.square(l_mean_dense_linear) -
+                                    K.exp(l_log_var_dense_linear), axis=-1)
             return K.mean(reconstruction_loss + (K.get_value(beta) * kl_loss))
 
         def call(self, inputs):
@@ -95,38 +126,16 @@ def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, initial_beta_
 
     prev = batchnorm_input
     encoder_target = batchnorm_input
-    for hidden_dim in hidden_dims:
-        # variational layer for hidden dim
-        z_mean_component = Dense(hidden_dim, kernel_initializer='glorot_uniform')
-        z_mean_dense_linear = z_mean_component(prev)
-
-        if batch_normalize_intermediaries:
-            z_mean_dense_batchnorm = BatchNormalization()(z_mean_dense_linear)
-        else: z_mean_dense_batchnorm = z_mean_dense_linear
-
-        if relu_intermediaries:
-            z_mean_encoded = Activation('relu')(z_mean_dense_batchnorm)
-        else:
-            z_mean_encoded = z_mean_dense_batchnorm
-
-        z_log_var_dense_linear = Dense(hidden_dim, kernel_initializer='glorot_uniform')(prev)
-
-        if batch_normalize_intermediaries:
-            z_log_var_dense_batchnorm = BatchNormalization()(z_log_var_dense_linear)
-        else:
-            z_log_var_dense_batchnorm = z_log_var_dense_linear
-
-        if relu_intermediaries:
-            z_log_var_encoded = Activation('relu')(z_log_var_dense_batchnorm)
-        else:
-            z_log_var_encoded = z_log_var_dense_batchnorm
-
-        # return the encoded and randomly sampled z vector (hidden layer 1)
-        z = Lambda(sampling, output_shape=(hidden_dim, ))([z_mean_encoded, z_log_var_encoded])
-        prev = z
-
-        # the encoder part to have a path that doesn't do sampling or ReLU'ing
-        encoder_target = z_mean_component(encoder_target)
+    if hidden_dims:
+        for hidden_dim in hidden_dims:
+            z, z_mean_component = make_variational_layer(prev, hidden_dim,
+                batch_normalize_intermediaries, relu_intermediaries,
+                sampling)
+            prev = z
+            # the encoder part to have a path that doesn't do sampling or ReLU'ing
+            encoder_target = z_mean_component(encoder_target)
+    else:
+        z = prev
 
     # variational layer for latent dim
     l_mean_component = Dense(latent_dim, kernel_initializer='glorot_uniform')
@@ -165,9 +174,12 @@ def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, initial_beta_
 
     # decoder latent->hidden
     prev = l
-    for hidden_dim in reversed(hidden_dims):
-        h = Dense(hidden_dim, kernel_initializer='glorot_uniform', activation='relu')(prev)
-        prev = h
+    if hidden_dims:
+        for hidden_dim in reversed(hidden_dims):
+            h = Dense(hidden_dim, kernel_initializer='glorot_uniform', activation='relu')(prev)
+            prev = h
+    else:
+        h = Dense(latent_dim, kernel_initializer='glorot_uniform', activation='relu')(prev)
     reconstruction = Dense(original_dim, kernel_initializer='glorot_uniform', activation='sigmoid')(h)
 
     adam = optimizers.Adam(lr=learning_rate)
@@ -194,8 +206,9 @@ def stacked_vae(x_train, x_val, hidden_dims=[300], latent_dim=100, initial_beta_
     # Also, create a decoder model
     encoded_input = Input(shape=(latent_dim,))
     prev = encoded_input
-    for i in reversed(range(len(hidden_dims)+1)):
-        prev = vae.layers[-(i+2)](prev)
+    if hidden_dims:
+        for i in reversed(range(len(hidden_dims)+1)):
+            prev = vae.layers[-(i+2)](prev)
     decoder = Model(encoded_input, prev)
 
     return hist, vae, encoder, sampling_encoder, decoder
