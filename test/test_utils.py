@@ -1,8 +1,64 @@
 import pytest
 import numpy as np
 import pandas as pd
+from scipy import spatial, cluster
 
 from maui import utils
+
+def test_merge_factors():
+    z = pd.DataFrame(
+        [
+            [1,1,1,0,0,0,1,0,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,1,0,0,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,1,1,1,0],
+        ],
+        index=[f'sample {i}' for i in range(11)],
+        columns=[f'LF{i}' for i in range(9)],
+        dtype=float
+        ) # expect 0,1,2 to be merged, and 3,7 to be merged
+
+    z_merged = utils.merge_factors(z, metric='euclidean', plot_dendro=False)
+
+    assert z_merged.shape[1] == 6
+    assert '0_1_2' in z_merged.columns
+    assert '3_7' in z_merged.columns
+
+def test_merge_factors_with_custom_linkage():
+    z = pd.DataFrame(
+        [
+            [1,1,1,0,0,0,1,0,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,1,0,0,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,1,1,1,0],
+        ],
+        index=[f'sample {i}' for i in range(11)],
+        columns=[f'LF{i}' for i in range(9)],
+        dtype=float
+        ) # expect 0,1,2 to be merged, and 3,7 to be merged
+
+    l = cluster.hierarchy.linkage(spatial.distance.pdist(z.T, 'minkowski'), 'average')
+
+    z_merged = utils.merge_factors(z, l=l, plot_dendro=False)
+
+    assert z_merged.shape[1] == 6
+    assert '0_1_2' in z_merged.columns
+    assert '3_7' in z_merged.columns
+
 
 def test_filter_factors_by_r2():
     dummy_z = pd.DataFrame(

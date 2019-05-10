@@ -2,6 +2,7 @@ import maui.utils
 import numpy as np
 import pandas as pd
 from functools import partial
+from scipy import spatial,cluster
 from sklearn.cluster import KMeans
 from sklearn.base import BaseEstimator
 from .autoencoders_architectures import stacked_vae, deep_vae
@@ -311,7 +312,7 @@ class Maui(BaseEstimator):
             w_{ij} is the coefficient associated with feature `i` in a linear model
             predicting it from latent factor `j`.
         """
-        if self.w_ is None:
+        if not hasattr(self, 'w_') or self.w_ is None:
             self.w_ = maui.utils.map_factors_to_feaures_using_linear_models(self.z_, self.x_.T)
         return self.w_
 
@@ -334,6 +335,54 @@ class Maui(BaseEstimator):
         if not hasattr(self, 'z_') or self.z_ is None:
             raise Exception("Must first transform some data in order to drop columns.")
         self.z_ = maui.utils.filter_factors_by_r2(self.z_, self.x_.T, threshold)
+        return self.z_
+
+    def merge_similar_latent_factors(self, distance_in='z', distance_metric='correlation',
+        linkage_method='complete', distance_threshold=0.17, merge_fn=np.mean,
+        plot_dendrogram=True, plot_dendro_ax=None):
+        """Merge latent factorz in z whose distance is below a certain threshold.
+        Used to squeeze down latent factor representations if there are many co-linear
+        latent factors.
+
+        Parameters
+        ----------
+        distance_in:        If 'z', latent factors will be merged based on their distance
+                            to each other in 'z'. If 'w', favtors will be merged based
+                            on their distance in 'w' (see :func:`get_linear_weights`)
+        distance_metric:    The distance metric based on which to merge latent factors.
+                            One which is supported by :func:`scipy.spatial.distance.pdist`
+        linkage_method:     The linkage method used to cluster latent factors. One which
+                            is supported by :func:`scipy.cluster.hierarchy.linkage`.
+        distance_threshold: Latent factors with distance below this threshold
+                            will be merged
+        merge_fn:           Function used to determine value of merged latent factor.
+                            The default is :func:`numpy.mean`, meaning the merged
+                            latent factor will have the mean value of the inputs.
+        plot_dendrogram:    Boolean. If true, a dendrogram will be plotted showing
+                            which latent factors are merged and the threshold.
+        plot_dendro_ax:     A matplotlib axis object to plot the dendrogram on (optional)
+
+        Returns
+        -------
+        z:                  (n_samples, n_factors) pd.DataFrame of latent factors
+                            where some have been merged
+        """
+        if not hasattr(self, 'z_') or self.z_ is None:
+            raise Exception('Cannot merge latent factors before fitting/transforming some.')
+
+        if distance_in == 'z':
+            self.z_ = maui.utils.merge_factors(self.z_, threshold=distance_threshold,
+                merge_fn=merge_fn, metric=distance_metric, linkage=linkage_method,
+                plot_dendro=plot_dendrogram, plot_dendro_ax=plot_dendro_ax)
+        elif distance_in == 'w':
+            w = self.get_linear_weights()
+            d = spatial.distance.pdist(w.T, distance_metric)
+            l = cluster.hierarchy.linkage(d, linkage_method)
+            self.z_ = maui.utils.merge_factors(self.z_, l=l,
+                threshold=distance_threshold, merge_fn=merge_fn,
+                plot_dendro=plot_dendrogram, plot_dendro_ax=plot_dendro_ax)
+        else:
+            raise Exception("Only 'z' and 'w' currently supported. See ``maui.utils.merge_factors for more flexibility.``")
         return self.z_
 
 

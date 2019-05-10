@@ -310,3 +310,99 @@ def test_maui_drops_unexplanatody_factors_by_r2():
     z_filt = maui_model.drop_unexplanatory_factors()
 
     assert z_filt.shape[1] == 8
+
+def test_maui_merges_latent_factors():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model.z_ = pd.DataFrame(
+        [
+            [1,1,1,0,0,0,1,0,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,1,0,0,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,1,1,1,0],
+        ],
+        index=[f'sample {i}' for i in range(11)],
+        columns=[f'LF{i}' for i in range(9)],
+        dtype=float
+        ) # expect 0,1,2 to be merged, and 3,7 to be merged
+
+    z_merged = maui_model.merge_similar_latent_factors(distance_metric='euclidean')
+    assert z_merged.shape[1] == 6
+    assert '0_1_2' in z_merged.columns
+    assert '3_7' in z_merged.columns
+
+def test_maui_merges_latent_factors_by_w():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model.z_ = pd.DataFrame(
+        [
+            [1,1,1,0,0,0,1,0,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,1,0,0,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,1,1,1,0],
+        ],
+        index=[f'sample {i}' for i in range(11)],
+        columns=[f'LF{i}' for i in range(9)],
+        dtype=float
+        )
+    maui_model.x_ = pd.DataFrame(
+        [
+            [1],
+            [1],
+            [1],
+            [1],
+            [1],
+            [1],
+            [0],
+            [0],
+            [0],
+            [0],
+            [0],
+        ],
+        index=[f'sample {i}' for i in range(11)],
+        columns=['Feature 1'],
+        dtype=float)
+    # with these z and x, expect 0,1,2 and 4,5 and 3,6,7
+    z_merged = maui_model.merge_similar_latent_factors(distance_in='w',
+        distance_metric='euclidean')
+    assert z_merged.shape[1] == 4
+    assert '0_1_2' in z_merged.columns
+    assert '3_6_7' in z_merged.columns
+    assert '4_5' in z_merged.columns
+
+def test_maui_merge_latent_factors_complains_if_unknown_merge_by():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model.z_ = pd.DataFrame(
+        [
+            [1,1,1,0,0,0,1,0,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,1,0,0,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,1,1,1,0],
+        ],
+        index=[f'sample {i}' for i in range(11)],
+        columns=[f'LF{i}' for i in range(9)],
+        dtype=float
+        ) # expect 0,1,2 to be merged, and 3,7 to be merged
+
+    with pytest.raises(Exception):
+        z_merged = maui_model.merge_similar_latent_factors(distance_in='xxx',
+            distance_metric='euclidean')

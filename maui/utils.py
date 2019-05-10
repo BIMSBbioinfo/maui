@@ -2,17 +2,78 @@
 The maui.utils model contains utility functions for multi-omics analysis
 using maui.
 """
-
 import numpy as np
 import pandas as pd
 from scipy import stats
 from scipy import interp
+from scipy import spatial
+from scipy import cluster
+from collections import Counter
 from sklearn.svm import LinearSVC
 from sklearn.metrics import roc_curve, auc
 from sklearn.preprocessing import label_binarize
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_predict
+
+def merge_factors(z, l=None, threshold=.17, merge_fn=np.mean,
+    metric='correlation', linkage='single', plot_dendro=True,
+    plot_dendro_ax=None):
+    """Merge latent factors in `z` which form clusters, as defined by hierarchical
+    clustering where a cluster is formed by cutting at a pre-set threshold, i.e.
+    merge factors if their distance to one-another is below `threshold`.
+
+    Parameters
+    ----------
+    z:              (n_samples, n_factors) DataFrame of latent factor values, output of a maui model
+    metric:         Distance metric to merge factors by, one which is supported by
+                    :func:`scipy.spatial.distance.pdist`
+    linkage:        The kind of linkage to form hierarchical clustering, one which is
+                    supported by :func:`scipy.cluster.hierarchy.linkage`
+    l:              As an alternative to supplying `metric` and `linkage`, supply a
+                    linkage matrix of your own choice, such as one computed by
+                    :func:`scipy.cluster.hierarchy.linkage`
+    threshold:      The distance threshold. latent factors with similarity below the
+                    threshold will be merged to form single latent facator
+    merge_fn:       A function which will be used to merge latent factors. The default
+                    is :func:`numpy.mean`, i.e. the newly formed (merged) latent factor
+                    will be the mean of the merged ones. Supply any function here which
+                    has the same interface, i.e. takes a matrix and an axis.
+    plot_dendro:    Boolean. If True, the function will plot a dendrogram showing
+                    which latent factors are merged and the threshold.
+    """
+    if l is None:
+        d = spatial.distance.pdist(z.T, metric)
+        l = cluster.hierarchy.linkage(d, linkage)
+
+    if plot_dendro:
+        try:
+            import matplotlib.pyplot as plt
+        except:
+            raise Exception("`plot_dendro` require matplotlib to be installed.")
+
+        if plot_dendro_ax is None:
+            fig, plot_dendro_ax = plt.subplots(figsize=(25,10))
+        dendro = cluster.hierarchy.dendrogram(l, leaf_font_size=18, color_threshold=threshold, ax=plot_dendro_ax)
+        plot_dendro_ax.hlines(threshold, *plot_dendro_ax.get_xlim(), 'red', 'dashed')
+
+    cl_labels = cluster.hierarchy.cut_tree(l, height=threshold).T[0]
+    factors_to_delete = set()
+    new_factors = list()
+    for cl,ct in Counter(cl_labels).items():
+        if ct<2:
+            continue
+        tomerge = (cl_labels==cl).nonzero()[0]
+        factors_to_delete.update(tomerge)
+        new_factors.append(merge_fn(z.iloc[:,tomerge], axis=1).rename(
+            '_'.join(f"{i}" for i in tomerge)))
+
+    new_z = z.copy()
+    new_z = new_z.loc[:,[c for c in new_z.columns if c not in factors_to_delete]]
+    new_z = new_z.iloc[:, [i for i in range(new_z.shape[1]) if i not in factors_to_delete]]
+    new_z = pd.concat([new_z] + new_factors, axis=1)
+    return new_z
+
 
 def filter_factors_by_r2(z, x, threshold=.02):
     """Filter latent factors by the R^2 of a linear model predicting features x
