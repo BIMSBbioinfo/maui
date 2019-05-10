@@ -4,8 +4,9 @@
 
 # maui
 
-[![Downloads](https://pepy.tech/badge/maui-tools)](https://pepy.tech/project/maui-tools) [![Build Status](https://travis-ci.com/BIMSBbioinfo/maui.svg?branch=master)](https://travis-ci.com/BIMSBbioinfo/maui)  [![codecov](https://codecov.io/gh/bimsbbioinfo/maui/branch/master/graph/badge.svg)](https://codecov.io/gh/bimsbbioinfo/maui) [![PyPI version](https://badge.fury.io/py/maui-tools.svg)](https://badge.fury.io/py/maui-tools) [![Documentation Status](https://readthedocs.org/projects/maui/badge/?version=latest)](https://maui.readthedocs.io/en/latest/?badge=latest)
+[![Downloads](https://pepy.tech/badge/maui-tools)](https://pepy.tech/project/maui-tools)  [![codecov](https://codecov.io/gh/bimsbbioinfo/maui/branch/master/graph/badge.svg)](https://codecov.io/gh/bimsbbioinfo/maui) [![PyPI version](https://badge.fury.io/py/maui-tools.svg)](https://badge.fury.io/py/maui-tools) [![Documentation Status](https://readthedocs.org/projects/maui/badge/?version=latest)](https://maui.readthedocs.io/en/latest/?badge=latest)
 
+<!-- [![Build Status](https://travis-ci.com/BIMSBbioinfo/maui.svg?branch=master)](https://travis-ci.com/BIMSBbioinfo/maui) -->
 
 
 Multi-omics Autoencoder Integration (**maui**) is a python package for multi-omics data analysis. It is based on a bayesian latent factor model, with inference done using artificial neural networks. For details, check out our pre-print on bioRxiv: https://www.biorxiv.org/content/early/2018/11/12/464743
