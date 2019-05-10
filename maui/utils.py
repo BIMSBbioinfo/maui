@@ -14,6 +14,29 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_predict
 
+def filter_factors_by_r2(z, x, threshold=.02):
+    """Filter latent factors by the R^2 of a linear model predicting features x
+    from latent factors z.
+
+    Parameters
+    ----------
+    z:  (n_samples, n_factors) DataFrame of latent factor values, output of a maui model
+    x:  (n_samples, n_features) DataFrame of concatenated multi-omics data
+
+    Returns
+    -------
+    z_filtered: (n_samples, n_factors) DataFrame of latent factor values,
+                with only those columns from the input `z` which have an R^2
+                above the threshold when using that column as an input
+                to a linear model predicting `x`.
+    """
+    scores = list()
+    for i in range(z.shape[1]):
+        regressor = LinearRegression()
+        regressor.fit(z.values[:,i].reshape(-1, 1), scale(x).T)
+        scores.append(regressor.score(z.values[:,i].reshape(-1, 1), scale(x).T))
+    return z.iloc[:,pd.Series(scores)[pd.Series(scores) > threshold].index]
+
 def map_factors_to_feaures_using_linear_models(z,x):
     """Get feature <-> latent factors mapping from linear models.
     Runs one univariate (multi-output) linear model per latent factor in `z`,

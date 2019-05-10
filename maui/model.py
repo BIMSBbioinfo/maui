@@ -305,8 +305,8 @@ class Maui(BaseEstimator):
         predicting feature values from latent factors. One model is fit per latent
         factor, and the coefficients are stored in the matrix.
 
-        Returns:
-        --------
+        Returns
+        -------
         W:  (n_features, n_latent_factors) DataFrame
             w_{ij} is the coefficient associated with feature `i` in a linear model
             predicting it from latent factor `j`.
@@ -314,6 +314,27 @@ class Maui(BaseEstimator):
         if self.w_ is None:
             self.w_ = maui.utils.map_factors_to_feaures_using_linear_models(self.z_, self.x_.T)
         return self.w_
+
+    def drop_unexplanatory_factors(self, threshold=.02):
+        """Drops factors which have a low R^2 score in a univariate linear model
+        predicting the features `x` from a column of the latent factors `z`.
+
+        Parameters
+        ----------
+        threshold:  threshold for R^2, latent factors below this threshold
+                    are dropped.
+
+        Returns
+        -------
+        z_filt:     (n_samples, n_factors) DataFrame of latent factor values,
+                    with only those columns from the input `z` which have an R^2
+                    above the threshold when using that column as an input
+                    to a linear model predicting `x`.
+        """
+        if not hasattr(self, 'z_') or self.z_ is None:
+            raise Exception("Must first transform some data in order to drop columns.")
+        self.z_ = maui.utils.filter_factors_by_r2(self.z_, self.x_.T, threshold)
+        return self.z_
 
 
     def _validate_X(self, X):

@@ -268,3 +268,45 @@ def test_maui_supports_single_layer_vae():
 def test_maui_supports_not_deep_deep_vae():
     maui_model = Maui(n_hidden=None, n_latent=2, epochs=1, architecture='deep')
     z = maui_model.fit_transform({'d1': df1, 'd2': df2})
+
+def test_maui_drops_unexplanatody_factors_by_r2():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model.z_ = pd.DataFrame(
+        [
+            [1,1,1,0,0,0,1,0,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,0,1,1,1,0],
+            [1,1,1,1,1,0,0,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,0,1,1,0],
+            [0,0,0,1,0,1,1,1,0],
+        ],
+        index=[f'sample {i}' for i in range(11)],
+        columns=[f'LF{i}' for i in range(9)],
+        dtype=float
+        ) # here the first 8 latent factors have R2 above threshold, the last does not
+    maui_model.x_ = pd.DataFrame(
+        [
+            [1],
+            [1],
+            [1],
+            [1],
+            [1],
+            [1],
+            [0],
+            [0],
+            [0],
+            [0],
+            [0],
+        ],
+        index=[f'sample {i}' for i in range(11)],
+        columns=['Feature 1'],
+        dtype=float)
+
+    z_filt = maui_model.drop_unexplanatory_factors()
+
+    assert z_filt.shape[1] == 8
