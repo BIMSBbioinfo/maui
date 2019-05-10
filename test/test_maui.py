@@ -55,6 +55,12 @@ def test_maui_saves_feature_correlations():
     z = maui_model.fit_transform({'d1': df1, 'd2': df2})
     assert hasattr(maui_model, 'feature_correlations')
 
+def test_maui_saves_w():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    z = maui_model.fit_transform({'d1': df1, 'd2': df2})
+    w = maui_model.get_linear_weights()
+    assert hasattr(maui_model, 'w_')
+
 def test_maui_clusters_with_single_k():
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
     maui_model.z_ = pd.DataFrame(np.random.randn(10,2),

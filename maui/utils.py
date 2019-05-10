@@ -11,7 +11,34 @@ from sklearn.svm import LinearSVC
 from sklearn.metrics import roc_curve, auc
 from sklearn.preprocessing import label_binarize
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_predict
+
+def map_factors_to_feaures_using_linear_models(z,x):
+    """Get feature <-> latent factors mapping from linear models.
+    Runs one univariate (multi-output) linear model per latent factor in `z`,
+    predicting the values of the features `x`, in order to get weights
+    between inputs and outputs.
+
+    Parameters
+    ----------
+    z:  (n_samples, n_factors) DataFrame of latent factor values, output of a maui model
+    x:  (n_samples, n_features) DataFrame of concatenated multi-omics data
+
+    Returns
+    -------
+    W:  (n_features, n_latent_factors) DataFrame
+        w_{ij} is the coefficient associated with feature `i` in a linear model
+        predicting it from latent factor `j`.
+    """
+    ws = list()
+    for i in range(z.shape[1]):
+        regressor = LinearRegression()
+        regressor.fit(z.values[:,i].reshape(-1, 1), scale(x).T)
+        ws.append(regressor.coef_)
+    W = pd.DataFrame(np.hstack(ws), index=x.index, columns=z.columns)
+    return W
+
 
 def correlate_factors_and_features(z, concatenated_data, pval_threshold=.001):
     """Compute pearson correlation of latent factors with input features.

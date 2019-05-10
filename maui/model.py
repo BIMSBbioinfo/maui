@@ -110,6 +110,7 @@ class Maui(BaseEstimator):
             index=self.x_.index,
             columns=[f'LF{i}' for i in range(1,self.n_latent+1)])
         self.feature_correlations = maui.utils.correlate_factors_and_features(self.z_, self.x_)
+        self.w_ = None
         return self.z_
 
     def fit_transform(self, X, y=None, X_validation=None, encoder='mean'):
@@ -298,6 +299,21 @@ class Maui(BaseEstimator):
         return maui.utils.compute_harrells_c(z, survival,
             duration_column, observed_column,
             cox_penalties, cv_folds)
+
+    def get_linear_weights(self):
+        """Get linear model coefficients obtained from fitting linear models
+        predicting feature values from latent factors. One model is fit per latent
+        factor, and the coefficients are stored in the matrix.
+
+        Returns:
+        --------
+        W:  (n_features, n_latent_factors) DataFrame
+            w_{ij} is the coefficient associated with feature `i` in a linear model
+            predicting it from latent factor `j`.
+        """
+        if self.w_ is None:
+            self.w_ = maui.utils.map_factors_to_feaures_using_linear_models(self.z_, self.x_.T)
+        return self.w_
 
 
     def _validate_X(self, X):

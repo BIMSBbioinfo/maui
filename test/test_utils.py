@@ -4,6 +4,38 @@ import pandas as pd
 
 from maui import utils
 
+def test_map_factors_to_feaures_using_linear_models():
+    dummy_z = pd.DataFrame(
+        [
+            [0,1],
+            [1,0]
+        ],
+        index=['sample 1', 'sample 2'],
+        columns=['LF1', 'LF2']
+    )
+
+    dummy_x = pd.DataFrame(
+        [
+            [1.,1.,1.,0.,0.,0.],
+            [0.,0.,0.,1.,1.,1.]
+        ],
+        columns=[f'feature{i}' for i in range(6)],
+        index=['sample 1', 'sample 2']
+    ).T
+
+    expected_w = np.array([
+        [-2.,  2.],
+        [-2.,  2.],
+        [-2.,  2.],
+        [ 2., -2.],
+        [ 2., -2.],
+        [ 2., -2.]
+        ])
+
+    w = utils.map_factors_to_feaures_using_linear_models(dummy_z, dummy_x)
+
+    assert np.allclose(w, expected_w)
+
 def test_correlate_factors_and_features():
     dummy_z = pd.DataFrame(
         [
