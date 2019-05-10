@@ -2,5 +2,5 @@
 *.egg-info
 build/
 dist/
-vignette/.ipynb_checkpoints
+**/.ipynb_checkpoints
 vignette/data
