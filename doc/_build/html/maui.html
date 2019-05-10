@@ -18,7 +18,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Maui Utilities" href="utils.html" />
-    <link rel="prev" title="Data and Normalization" href="data-normalization.html" />
+    <link rel="prev" title="Data and Normalization" href="filtering-and-merging-latent-factors.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -39,7 +39,7 @@
 <h1>The Maui Class<a class="headerlink" href="#the-maui-class" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="maui.Maui">
-<em class="property">class </em><code class="descclassname">maui.</code><code class="descname">Maui</code><span class="sig-paren">(</span><em>n_hidden=[1500], n_latent=80, batch_size=100, epochs=400</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">maui.</code><code class="descname">Maui</code><span class="sig-paren">(</span><em>n_hidden=[1500], n_latent=80, batch_size=100, epochs=400, architecture='stacked', **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maui (Multi-omics Autoencoder Integration) model.</p>
 <p>Trains a variational autoencoder to find latent factors in multi-modal data.</p>
 <dl class="docutils">
@@ -53,6 +53,11 @@ layers of the autoencoder</dd>
 <dd>The size of the mini-batches used for training the network</dd>
 <dt>epochs: int (default 400)</dt>
 <dd>The number of epoches to use for training the network</dd>
+<dt>architecture:</dt>
+<dd>One of ‘stacked’ or ‘deep’. If ‘stacked’, will use a stacked VAE model, where
+the intermediate layers are also variational. If ‘deep’, will train a deep VAE
+where the intermediate layers are regular (ReLU) units, and only the middle
+(latent) layer is variational.</dd>
 </dl>
 <dl class="method">
 <dt id="maui.Maui.c_index">
@@ -136,6 +141,23 @@ defining that class (or the mean) ROC.</dd>
 </dd></dl>
 
 <dl class="method">
+<dt id="maui.Maui.drop_unexplanatory_factors">
+<code class="descname">drop_unexplanatory_factors</code><span class="sig-paren">(</span><em>threshold=0.02</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui.drop_unexplanatory_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui.drop_unexplanatory_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drops factors which have a low R^2 score in a univariate linear model
+predicting the features <cite>x</cite> from a column of the latent factors <cite>z</cite>.</p>
+<dl class="docutils">
+<dt>threshold:  threshold for R^2, latent factors below this threshold</dt>
+<dd>are dropped.</dd>
+</dl>
+<dl class="docutils">
+<dt>z_filt:     (n_samples, n_factors) DataFrame of latent factor values,</dt>
+<dd>with only those columns from the input <cite>z</cite> which have an R^2
+above the threshold when using that column as an input
+to a linear model predicting <cite>x</cite>.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="maui.Maui.fit">
 <code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em>, <em>X_validation=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Train autoencoder model</p>
@@ -153,7 +175,7 @@ The sample names must match, the feature names need not.</dd>
 
 <dl class="method">
 <dt id="maui.Maui.fit_transform">
-<code class="descname">fit_transform</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em>, <em>X_validation=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui.fit_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui.fit_transform" title="Permalink to this definition">¶</a></dt>
+<code class="descname">fit_transform</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em>, <em>X_validation=None</em>, <em>encoder='mean'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui.fit_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui.fit_transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Train autoencoder model, and return the latent factor representation
 of the data X.</p>
 <dl class="docutils">
@@ -168,6 +190,48 @@ The sample names must match, the feature names need not.</dd>
 <dl class="docutils">
 <dt>z:  DataFrame (n_samples, n_latent_factors)</dt>
 <dd>Latent factors representation of the data X.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="maui.Maui.get_linear_weights">
+<code class="descname">get_linear_weights</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui.get_linear_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui.get_linear_weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get linear model coefficients obtained from fitting linear models
+predicting feature values from latent factors. One model is fit per latent
+factor, and the coefficients are stored in the matrix.</p>
+<dl class="docutils">
+<dt>W:  (n_features, n_latent_factors) DataFrame</dt>
+<dd>w_{ij} is the coefficient associated with feature <cite>i</cite> in a linear model
+predicting it from latent factor <cite>j</cite>.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="maui.Maui.merge_similar_latent_factors">
+<code class="descname">merge_similar_latent_factors</code><span class="sig-paren">(</span><em>distance_in='z'</em>, <em>distance_metric='correlation'</em>, <em>linkage_method='complete'</em>, <em>distance_threshold=0.17</em>, <em>merge_fn=&lt;function mean&gt;</em>, <em>plot_dendrogram=True</em>, <em>plot_dendro_ax=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui.merge_similar_latent_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui.merge_similar_latent_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge latent factorz in z whose distance is below a certain threshold.
+Used to squeeze down latent factor representations if there are many co-linear
+latent factors.</p>
+<dl class="docutils">
+<dt>distance_in:        If ‘z’, latent factors will be merged based on their distance</dt>
+<dd>to each other in ‘z’. If ‘w’, favtors will be merged based
+on their distance in ‘w’ (see <a class="reference internal" href="#maui.Maui.get_linear_weights" title="maui.Maui.get_linear_weights"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_linear_weights()</span></code></a>)</dd>
+<dt>distance_metric:    The distance metric based on which to merge latent factors.</dt>
+<dd>One which is supported by <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.spatial.distance.pdist()</span></code></dd>
+<dt>linkage_method:     The linkage method used to cluster latent factors. One which</dt>
+<dd>is supported by <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.cluster.hierarchy.linkage()</span></code>.</dd>
+<dt>distance_threshold: Latent factors with distance below this threshold</dt>
+<dd>will be merged</dd>
+<dt>merge_fn:           Function used to determine value of merged latent factor.</dt>
+<dd>The default is <code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.mean()</span></code>, meaning the merged
+latent factor will have the mean value of the inputs.</dd>
+<dt>plot_dendrogram:    Boolean. If true, a dendrogram will be plotted showing</dt>
+<dd>which latent factors are merged and the threshold.</dd>
+</dl>
+<p>plot_dendro_ax:     A matplotlib axis object to plot the dendrogram on (optional)</p>
+<dl class="docutils">
+<dt>z:                  (n_samples, n_factors) pd.DataFrame of latent factors</dt>
+<dd>where some have been merged</dd>
 </dl>
 </dd></dl>
 
@@ -199,13 +263,18 @@ of survival, controlling for covariates)</dd>
 
 <dl class="method">
 <dt id="maui.Maui.transform">
-<code class="descname">transform</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui.transform" title="Permalink to this definition">¶</a></dt>
+<code class="descname">transform</code><span class="sig-paren">(</span><em>X</em>, <em>encoder='mean'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui.transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Transform X into the latent space that was previously learned using
 <cite>fit</cite> or <cite>fit_transform</cite>, and return the latent factor representation.</p>
 <dl class="docutils">
-<dt>X:  dict with multi-modal dataframes, containing training data, e.g.</dt>
+<dt>X:          dict with multi-modal dataframes, containing training data, e.g.</dt>
 <dd>{‘mRNA’: df1, ‘SNP’: df2},
 df1, df2, etc. are (n_features, n_samples) pandas.DataFrame’s.</dd>
+<dt>encoder:    the mode of the encoder to be used. one of ‘mean’ or ‘sample’,</dt>
+<dd>where ‘mean’ indicates the encoder network only uses the mean
+estimates for each successive layer. ‘sample’ indicates the
+encoder should sample from the distribution specified from each
+successive layer, and results in non-reproducible embeddings.</dd>
 </dl>
 <dl class="docutils">
 <dt>z:  DataFrame (n_samples, n_latent_factors)</dt>
@@ -240,6 +309,7 @@ df1, df2, etc. are (n_features, n_samples) pandas.DataFrame’s.</dd>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="autoencoder-integration.html">Multi-modal Autoencoders</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data-normalization.html">Data and Normalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filtering-and-merging-latent-factors.html">Data and Normalization</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">The Maui Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Maui Utilities</a></li>
 </ul>
@@ -248,7 +318,7 @@ df1, df2, etc. are (n_features, n_samples) pandas.DataFrame’s.</dd>
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="data-normalization.html" title="previous chapter">Data and Normalization</a></li>
+      <li>Previous: <a href="filtering-and-merging-latent-factors.html" title="previous chapter">Data and Normalization</a></li>
       <li>Next: <a href="utils.html" title="next chapter">Maui Utilities</a></li>
   </ul></li>
 </ul>

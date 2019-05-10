@@ -12,6 +12,7 @@ Table of contents
 
    autoencoder-integration
    data-normalization
+   filtering-and-merging-latent-factors
    maui
    utils
 

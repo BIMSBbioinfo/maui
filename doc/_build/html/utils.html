@@ -78,6 +78,18 @@ defining that class (or the mean) ROC.</dd>
 </dd></dl>
 
 <dl class="function">
+<dt id="maui.utils.correlate_factors_and_features">
+<code class="descclassname">maui.utils.</code><code class="descname">correlate_factors_and_features</code><span class="sig-paren">(</span><em>z</em>, <em>concatenated_data</em>, <em>pval_threshold=0.001</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#correlate_factors_and_features"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.correlate_factors_and_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute pearson correlation of latent factors with input features.</p>
+<p>z:                  (n_samples, n_factors) DataFrame of latent factor values, output of maui model
+concatenated_data:  (n_samples, n_features) DataFrame of concatenated multi-omics data</p>
+<dl class="docutils">
+<dt>feature_s:  DataFrame (n_features, n_latent_factors)</dt>
+<dd>Latent factors representation of the data X.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="maui.utils.estimate_kaplan_meier">
 <code class="descclassname">maui.utils.</code><code class="descname">estimate_kaplan_meier</code><span class="sig-paren">(</span><em>y</em>, <em>survival</em>, <em>duration_column='duration'</em>, <em>observed_column='observed'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#estimate_kaplan_meier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.estimate_kaplan_meier" title="Permalink to this definition">¶</a></dt>
 <dd><p>Estimate survival curves for groups defined in y based on survival data in <code class="docutils literal notranslate"><span class="pre">survival</span></code></p>
@@ -102,14 +114,60 @@ defined in <code class="docutils literal notranslate"><span class="pre">y</span>
 </dd></dl>
 
 <dl class="function">
-<dt id="maui.utils.map_factors_to_features">
-<code class="descclassname">maui.utils.</code><code class="descname">map_factors_to_features</code><span class="sig-paren">(</span><em>z</em>, <em>concatenated_data</em>, <em>pval_threshold=0.001</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#map_factors_to_features"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.map_factors_to_features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute pearson correlation of latent factors with input features.</p>
-<p>z:                  (n_samples, n_factors) DataFrame of latent factor values, output of maui model
-concatenated_data:  (n_samples, n_features) DataFrame of concatenated multi-omics data</p>
+<dt id="maui.utils.filter_factors_by_r2">
+<code class="descclassname">maui.utils.</code><code class="descname">filter_factors_by_r2</code><span class="sig-paren">(</span><em>z</em>, <em>x</em>, <em>threshold=0.02</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#filter_factors_by_r2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.filter_factors_by_r2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter latent factors by the R^2 of a linear model predicting features x
+from latent factors z.</p>
+<p>z:  (n_samples, n_factors) DataFrame of latent factor values, output of a maui model
+x:  (n_samples, n_features) DataFrame of concatenated multi-omics data</p>
 <dl class="docutils">
-<dt>feature_s:  DataFrame (n_features, n_latent_factors)</dt>
-<dd>Latent factors representation of the data X.</dd>
+<dt>z_filtered: (n_samples, n_factors) DataFrame of latent factor values,</dt>
+<dd>with only those columns from the input <cite>z</cite> which have an R^2
+above the threshold when using that column as an input
+to a linear model predicting <cite>x</cite>.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="maui.utils.map_factors_to_feaures_using_linear_models">
+<code class="descclassname">maui.utils.</code><code class="descname">map_factors_to_feaures_using_linear_models</code><span class="sig-paren">(</span><em>z</em>, <em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#map_factors_to_feaures_using_linear_models"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.map_factors_to_feaures_using_linear_models" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get feature &lt;-&gt; latent factors mapping from linear models.
+Runs one univariate (multi-output) linear model per latent factor in <cite>z</cite>,
+predicting the values of the features <cite>x</cite>, in order to get weights
+between inputs and outputs.</p>
+<p>z:  (n_samples, n_factors) DataFrame of latent factor values, output of a maui model
+x:  (n_samples, n_features) DataFrame of concatenated multi-omics data</p>
+<dl class="docutils">
+<dt>W:  (n_features, n_latent_factors) DataFrame</dt>
+<dd>w_{ij} is the coefficient associated with feature <cite>i</cite> in a linear model
+predicting it from latent factor <cite>j</cite>.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="maui.utils.merge_factors">
+<code class="descclassname">maui.utils.</code><code class="descname">merge_factors</code><span class="sig-paren">(</span><em>z</em>, <em>l=None</em>, <em>threshold=0.17</em>, <em>merge_fn=&lt;function mean&gt;</em>, <em>metric='correlation'</em>, <em>linkage='single'</em>, <em>plot_dendro=True</em>, <em>plot_dendro_ax=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#merge_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.merge_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge latent factors in <cite>z</cite> which form clusters, as defined by hierarchical
+clustering where a cluster is formed by cutting at a pre-set threshold, i.e.
+merge factors if their distance to one-another is below <cite>threshold</cite>.</p>
+<p>z:              (n_samples, n_factors) DataFrame of latent factor values, output of a maui model
+metric:         Distance metric to merge factors by, one which is supported by</p>
+<blockquote>
+<div><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.spatial.distance.pdist()</span></code></div></blockquote>
+<dl class="docutils">
+<dt>linkage:        The kind of linkage to form hierarchical clustering, one which is</dt>
+<dd>supported by <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.cluster.hierarchy.linkage()</span></code></dd>
+<dt>l:              As an alternative to supplying <cite>metric</cite> and <cite>linkage</cite>, supply a</dt>
+<dd>linkage matrix of your own choice, such as one computed by
+<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.cluster.hierarchy.linkage()</span></code></dd>
+<dt>threshold:      The distance threshold. latent factors with similarity below the</dt>
+<dd>threshold will be merged to form single latent facator</dd>
+<dt>merge_fn:       A function which will be used to merge latent factors. The default</dt>
+<dd>is <code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.mean()</span></code>, i.e. the newly formed (merged) latent factor
+will be the mean of the merged ones. Supply any function here which
+has the same interface, i.e. takes a matrix and an axis.</dd>
+<dt>plot_dendro:    Boolean. If True, the function will plot a dendrogram showing</dt>
+<dd>which latent factors are merged and the threshold.</dd>
 </dl>
 </dd></dl>
 
@@ -141,9 +199,8 @@ p_value:            the associated p_value</p>
 <dt id="maui.utils.scale">
 <code class="descclassname">maui.utils.</code><code class="descname">scale</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#scale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.scale" title="Permalink to this definition">¶</a></dt>
 <dd><p>Scale and center data</p>
-<p>Parameters:</p>
 <p>df:     pd.DataFrame (n_features, n_samples) non-scaled data</p>
-<p>pd.DataFrame (n_features, n_samples) scaled data</p>
+<p>scaled: pd.DataFrame (n_features, n_samples) scaled data</p>
 </dd></dl>
 
 <dl class="function">
@@ -197,6 +254,7 @@ of survival, controlling for covariates)</dd>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="autoencoder-integration.html">Multi-modal Autoencoders</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data-normalization.html">Data and Normalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filtering-and-merging-latent-factors.html">Data and Normalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="maui.html">The Maui Class</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Maui Utilities</a></li>
 </ul>

@@ -1,0 +1,264 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Filtering and Merging latent factors &#8212;  0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="_static/icons8-beach-30.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The Maui Class" href="maui.html" />
+    <link rel="prev" title="Data and Normalization" href="data-normalization.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="filtering-and-merging-latent-factors">
+<h1>Filtering and Merging latent factors<a class="headerlink" href="#filtering-and-merging-latent-factors" title="Permalink to this headline">¶</a></h1>
+<p>We recommend running Maui with a large number of latent factors (e.g. 100), even when we expect the latent space to be of lower dimension. This way we are more likely to capture latent factors which are interesting, and the uninteresting ones can be dropped later before down-stream analysis. Maui comes with some functionality to that end.</p>
+<div class="section" id="dropping-unexplanatory-latent-factors">
+<h2>Dropping unexplanatory latent factors<a class="headerlink" href="#dropping-unexplanatory-latent-factors" title="Permalink to this headline">¶</a></h2>
+<p>An unsupervised way to drop latent factors with low explanatory power, is to fit linear models predicting the input <cite>x</cite> from the latent factorz <cite>z</cite>. The <a class="reference internal" href="utils.html"><span class="doc">Maui Utilities</span></a> have a function which does this. For each latent factor, a linear model is fit, predicting all input features from each latent factor. Then, the R-square is computed. Factors with an R-square score below some threshold are dropped.</p>
+<dl class="function">
+<dt id="maui.utils.filter_factors_by_r2">
+<code class="descclassname">maui.utils.</code><code class="descname">filter_factors_by_r2</code><span class="sig-paren">(</span><em>z</em>, <em>x</em>, <em>threshold=0.02</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#filter_factors_by_r2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.filter_factors_by_r2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter latent factors by the R^2 of a linear model predicting features x
+from latent factors z.</p>
+<p>z:  (n_samples, n_factors) DataFrame of latent factor values, output of a maui model
+x:  (n_samples, n_features) DataFrame of concatenated multi-omics data</p>
+<dl class="docutils">
+<dt>z_filtered: (n_samples, n_factors) DataFrame of latent factor values,</dt>
+<dd>with only those columns from the input <cite>z</cite> which have an R^2
+above the threshold when using that column as an input
+to a linear model predicting <cite>x</cite>.</dd>
+</dl>
+</dd></dl>
+
+<p>The functionality is also available directly on a trained Maui model (<a class="reference internal" href="maui.html"><span class="doc">The Maui Class</span></a>), which exposes a function which drops unexplanatory factors in-place:</p>
+<dl class="function">
+<dt id="maui.Maui.drop_unexplanatory_factors">
+<code class="descclassname">maui.Maui.</code><code class="descname">drop_unexplanatory_factors</code><span class="sig-paren">(</span><em>self</em>, <em>threshold=0.02</em><span class="sig-paren">)</span><a class="headerlink" href="#maui.Maui.drop_unexplanatory_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drops factors which have a low R^2 score in a univariate linear model
+predicting the features <cite>x</cite> from a column of the latent factors <cite>z</cite>.</p>
+<dl class="docutils">
+<dt>threshold:  threshold for R^2, latent factors below this threshold</dt>
+<dd>are dropped.</dd>
+</dl>
+<dl class="docutils">
+<dt>z_filt:     (n_samples, n_factors) DataFrame of latent factor values,</dt>
+<dd>with only those columns from the input <cite>z</cite> which have an R^2
+above the threshold when using that column as an input
+to a linear model predicting <cite>x</cite>.</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="merging-similar-latent-factors">
+<h2>Merging similar latent factors<a class="headerlink" href="#merging-similar-latent-factors" title="Permalink to this headline">¶</a></h2>
+<p>Some times running Maui with a large number of latent factor can produce embeddings which are similar to one another. For instance, a heatmap of latent factor values may look like this:</p>
+<div class="figure">
+<img alt="_images/colinearity.png" src="_images/colinearity.png" />
+</div>
+<p>Heatmap of latent factors shows many latent factors are very similar.</p>
+<p>The latent factors may be clustered and merged to produce a more succinct, even lower-dimension representation of the data, without losing much information</p>
+<div class="figure">
+<img alt="_images/colinearity-merged.png" src="_images/colinearity-merged.png" />
+</div>
+<p>Heatmap of latent factors after they have been merged by similarity values.</p>
+<p><a class="reference internal" href="utils.html"><span class="doc">Maui Utilities</span></a> provides functionality to merge latent factors based on arbitrary distance metrics:</p>
+<dl class="function">
+<dt id="maui.utils.merge_factors">
+<code class="descclassname">maui.utils.</code><code class="descname">merge_factors</code><span class="sig-paren">(</span><em>z</em>, <em>l=None</em>, <em>threshold=0.17</em>, <em>merge_fn=&lt;function mean&gt;</em>, <em>metric='correlation'</em>, <em>linkage='single'</em>, <em>plot_dendro=True</em>, <em>plot_dendro_ax=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#merge_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.merge_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge latent factors in <cite>z</cite> which form clusters, as defined by hierarchical
+clustering where a cluster is formed by cutting at a pre-set threshold, i.e.
+merge factors if their distance to one-another is below <cite>threshold</cite>.</p>
+<p>z:              (n_samples, n_factors) DataFrame of latent factor values, output of a maui model
+metric:         Distance metric to merge factors by, one which is supported by</p>
+<blockquote>
+<div><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.spatial.distance.pdist()</span></code></div></blockquote>
+<dl class="docutils">
+<dt>linkage:        The kind of linkage to form hierarchical clustering, one which is</dt>
+<dd>supported by <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.cluster.hierarchy.linkage()</span></code></dd>
+<dt>l:              As an alternative to supplying <cite>metric</cite> and <cite>linkage</cite>, supply a</dt>
+<dd>linkage matrix of your own choice, such as one computed by
+<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.cluster.hierarchy.linkage()</span></code></dd>
+<dt>threshold:      The distance threshold. latent factors with similarity below the</dt>
+<dd>threshold will be merged to form single latent facator</dd>
+<dt>merge_fn:       A function which will be used to merge latent factors. The default</dt>
+<dd>is <code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.mean()</span></code>, i.e. the newly formed (merged) latent factor
+will be the mean of the merged ones. Supply any function here which
+has the same interface, i.e. takes a matrix and an axis.</dd>
+<dt>plot_dendro:    Boolean. If True, the function will plot a dendrogram showing</dt>
+<dd>which latent factors are merged and the threshold.</dd>
+</dl>
+</dd></dl>
+
+<p>And functionality for the base case where factors are merged by correlation is provided in the Maui model calss:</p>
+<dl class="function">
+<dt id="maui.Maui.merge_similar_latent_factors">
+<code class="descclassname">maui.Maui.</code><code class="descname">merge_similar_latent_factors</code><span class="sig-paren">(</span><em>self</em>, <em>distance_in='z'</em>, <em>distance_metric='correlation'</em>, <em>linkage_method='complete'</em>, <em>distance_threshold=0.17</em>, <em>merge_fn=&lt;function mean&gt;</em>, <em>plot_dendrogram=True</em>, <em>plot_dendro_ax=None</em><span class="sig-paren">)</span><a class="headerlink" href="#maui.Maui.merge_similar_latent_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge latent factorz in z whose distance is below a certain threshold.
+Used to squeeze down latent factor representations if there are many co-linear
+latent factors.</p>
+<dl class="docutils">
+<dt>distance_in:        If ‘z’, latent factors will be merged based on their distance</dt>
+<dd>to each other in ‘z’. If ‘w’, favtors will be merged based
+on their distance in ‘w’ (see <a class="reference internal" href="maui.html#maui.Maui.get_linear_weights" title="maui.Maui.get_linear_weights"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_linear_weights()</span></code></a>)</dd>
+<dt>distance_metric:    The distance metric based on which to merge latent factors.</dt>
+<dd>One which is supported by <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.spatial.distance.pdist()</span></code></dd>
+<dt>linkage_method:     The linkage method used to cluster latent factors. One which</dt>
+<dd>is supported by <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.cluster.hierarchy.linkage()</span></code>.</dd>
+<dt>distance_threshold: Latent factors with distance below this threshold</dt>
+<dd>will be merged</dd>
+<dt>merge_fn:           Function used to determine value of merged latent factor.</dt>
+<dd>The default is <code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.mean()</span></code>, meaning the merged
+latent factor will have the mean value of the inputs.</dd>
+<dt>plot_dendrogram:    Boolean. If true, a dendrogram will be plotted showing</dt>
+<dd>which latent factors are merged and the threshold.</dd>
+</dl>
+<p>plot_dendro_ax:     A matplotlib axis object to plot the dendrogram on (optional)</p>
+<dl class="docutils">
+<dt>z:                  (n_samples, n_factors) pd.DataFrame of latent factors</dt>
+<dd>where some have been merged</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="supervised-filtering-of-latent-factors">
+<h2>Supervised filtering of latent factors<a class="headerlink" href="#supervised-filtering-of-latent-factors" title="Permalink to this headline">¶</a></h2>
+<p>In the case of patient data, latent factors may be assessed for usefulness based on how predictive they are of patient survival. Maui includes functionality to do this in the utilities class:</p>
+<dl class="function">
+<dt id="maui.utils.select_clinical_factors">
+<code class="descclassname">maui.utils.</code><code class="descname">select_clinical_factors</code><span class="sig-paren">(</span><em>z</em>, <em>survival</em>, <em>duration_column='duration'</em>, <em>observed_column='observed'</em>, <em>alpha=0.05</em>, <em>cox_penalizer=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/utils.html#select_clinical_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.utils.select_clinical_factors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Select latent factors which are predictive of survival. This is
+accomplished by fitting a Cox Proportional Hazards (CPH) model to each
+latent factor, while controlling for known covariates, and only keeping
+those latent factors whose coefficient in the CPH is nonzero (adjusted
+p-value &lt; alpha).</p>
+<dl class="docutils">
+<dt>survival:           pd.DataFrame of survival information and relevant covariates</dt>
+<dd>(such as sex, age at diagnosis, or tumor stage)</dd>
+<dt>duration_column:    the name of the column in <code class="docutils literal notranslate"><span class="pre">survival</span></code> containing the</dt>
+<dd>duration (time between diagnosis and death or last followup)</dd>
+<dt>observed_column:    the name of the column in <code class="docutils literal notranslate"><span class="pre">survival</span></code> containing</dt>
+<dd>indicating whether time of death is known</dd>
+<dt>alpha:              threshold for p-value of CPH coefficients to call a latent</dt>
+<dd>factor clinically relevant (p &lt; alpha)</dd>
+</dl>
+<p>cox_penalizer:      penalty coefficient in Cox PH solver (see <code class="docutils literal notranslate"><span class="pre">lifelines.CoxPHFitter</span></code>)</p>
+<dl class="docutils">
+<dt>z_clinical: pd.DataFrame, subset of the latent factors which have been</dt>
+<dd>determined to have clinical value (are individually predictive
+of survival, controlling for covariates)</dd>
+</dl>
+</dd></dl>
+
+<p>For a more comprehensive example, check out <a class="reference external" href="https://github.com/BIMSBbioinfo/maui/blob/master/vignette/maui_vignette.ipynb">our vignette</a>.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/hex-maui.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="index.html"></a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="autoencoder-integration.html">Multi-modal Autoencoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data-normalization.html">Data and Normalization</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Filtering and Merging latent factors</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dropping-unexplanatory-latent-factors">Dropping unexplanatory latent factors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#merging-similar-latent-factors">Merging similar latent factors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#supervised-filtering-of-latent-factors">Supervised filtering of latent factors</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="maui.html">The Maui Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Maui Utilities</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="data-normalization.html" title="previous chapter">Data and Normalization</a></li>
+      <li>Next: <a href="maui.html" title="next chapter">The Maui Class</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Jonathan Ronen, Altuna Akalin.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/filtering-and-merging-latent-factors.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
