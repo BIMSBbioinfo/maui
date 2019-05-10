@@ -109,7 +109,7 @@ class Maui(BaseEstimator):
         self.z_ = pd.DataFrame(the_encoder.predict(self.x_),
             index=self.x_.index,
             columns=[f'LF{i}' for i in range(1,self.n_latent+1)])
-        self.feature_correlations = maui.utils.map_factors_to_features(self.z_, self.x_)
+        self.feature_correlations = maui.utils.correlate_factors_and_features(self.z_, self.x_)
         return self.z_
 
     def fit_transform(self, X, y=None, X_validation=None, encoder='mean'):

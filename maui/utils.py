@@ -13,7 +13,7 @@ from sklearn.preprocessing import label_binarize
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_predict
 
-def map_factors_to_features(z, concatenated_data, pval_threshold=.001):
+def correlate_factors_and_features(z, concatenated_data, pval_threshold=.001):
     """Compute pearson correlation of latent factors with input features.
 
     Parameters

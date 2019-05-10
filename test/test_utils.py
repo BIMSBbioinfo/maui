@@ -4,7 +4,7 @@ import pandas as pd
 
 from maui import utils
 
-def test_map_factors_to_features():
+def test_correlate_factors_and_features():
     dummy_z = pd.DataFrame(
         [
             [0,1],
@@ -32,7 +32,7 @@ def test_map_factors_to_features():
         [ 1., -1.]
         ])
 
-    corrs = utils.map_factors_to_features(dummy_z, dummy_x)
+    corrs = utils.correlate_factors_and_features(dummy_z, dummy_x)
 
     assert np.allclose(corrs, expected_corrs)
 
