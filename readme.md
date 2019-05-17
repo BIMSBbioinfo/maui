@@ -4,7 +4,7 @@
 
 # maui
 
-[![Downloads](https://pepy.tech/badge/maui-tools)](https://pepy.tech/project/maui-tools)  [![codecov](https://codecov.io/gh/bimsbbioinfo/maui/branch/master/graph/badge.svg)](https://codecov.io/gh/bimsbbioinfo/maui) [![PyPI version](https://badge.fury.io/py/maui-tools.svg)](https://badge.fury.io/py/maui-tools) [![Documentation Status](https://readthedocs.org/projects/maui/badge/?version=latest)](https://maui.readthedocs.io/en/latest/?badge=latest)
+[![Downloads](https://pepy.tech/badge/maui-tools)](https://pepy.tech/project/maui-tools)  [![codecov](https://codecov.io/gh/bimsbbioinfo/maui/branch/master/graph/badge.svg)](https://codecov.io/gh/bimsbbioinfo/maui) [![PyPI version](https://badge.fury.io/py/maui-tools.svg)](https://badge.fury.io/py/maui-tools) [![Documentation Status](https://readthedocs.org/projects/maui/badge/?version=latest)](https://maui.readthedocs.io/en/latest/?badge=latest) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 
 <!-- [![Build Status](https://travis-ci.com/BIMSBbioinfo/maui.svg?branch=master)](https://travis-ci.com/BIMSBbioinfo/maui) -->
 

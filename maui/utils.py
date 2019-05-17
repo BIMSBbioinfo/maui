@@ -16,9 +16,17 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_predict
 
-def merge_factors(z, l=None, threshold=.17, merge_fn=np.mean,
-    metric='correlation', linkage='single', plot_dendro=True,
-    plot_dendro_ax=None):
+
+def merge_factors(
+    z,
+    l=None,
+    threshold=0.17,
+    merge_fn=np.mean,
+    metric="correlation",
+    linkage="single",
+    plot_dendro=True,
+    plot_dendro_ax=None,
+):
     """Merge latent factors in `z` which form clusters, as defined by hierarchical
     clustering where a cluster is formed by cutting at a pre-set threshold, i.e.
     merge factors if their distance to one-another is below `threshold`.
@@ -53,29 +61,36 @@ def merge_factors(z, l=None, threshold=.17, merge_fn=np.mean,
             raise Exception("`plot_dendro` require matplotlib to be installed.")
 
         if plot_dendro_ax is None:
-            fig, plot_dendro_ax = plt.subplots(figsize=(25,10))
-        dendro = cluster.hierarchy.dendrogram(l, leaf_font_size=18, color_threshold=threshold, ax=plot_dendro_ax)
-        plot_dendro_ax.hlines(threshold, *plot_dendro_ax.get_xlim(), 'red', 'dashed')
+            fig, plot_dendro_ax = plt.subplots(figsize=(25, 10))
+        dendro = cluster.hierarchy.dendrogram(
+            l, leaf_font_size=18, color_threshold=threshold, ax=plot_dendro_ax
+        )
+        plot_dendro_ax.hlines(threshold, *plot_dendro_ax.get_xlim(), "red", "dashed")
 
     cl_labels = cluster.hierarchy.cut_tree(l, height=threshold).T[0]
     factors_to_delete = set()
     new_factors = list()
-    for cl,ct in Counter(cl_labels).items():
-        if ct<2:
+    for cl, ct in Counter(cl_labels).items():
+        if ct < 2:
             continue
-        tomerge = (cl_labels==cl).nonzero()[0]
+        tomerge = (cl_labels == cl).nonzero()[0]
         factors_to_delete.update(tomerge)
-        new_factors.append(merge_fn(z.iloc[:,tomerge], axis=1).rename(
-            '_'.join(f"{i}" for i in tomerge)))
+        new_factors.append(
+            merge_fn(z.iloc[:, tomerge], axis=1).rename(
+                "_".join(f"{i}" for i in tomerge)
+            )
+        )
 
     new_z = z.copy()
-    new_z = new_z.loc[:,[c for c in new_z.columns if c not in factors_to_delete]]
-    new_z = new_z.iloc[:, [i for i in range(new_z.shape[1]) if i not in factors_to_delete]]
+    new_z = new_z.loc[:, [c for c in new_z.columns if c not in factors_to_delete]]
+    new_z = new_z.iloc[
+        :, [i for i in range(new_z.shape[1]) if i not in factors_to_delete]
+    ]
     new_z = pd.concat([new_z] + new_factors, axis=1)
     return new_z
 
 
-def filter_factors_by_r2(z, x, threshold=.02):
+def filter_factors_by_r2(z, x, threshold=0.02):
     """Filter latent factors by the R^2 of a linear model predicting features x
     from latent factors z.
 
@@ -94,11 +109,12 @@ def filter_factors_by_r2(z, x, threshold=.02):
     scores = list()
     for i in range(z.shape[1]):
         regressor = LinearRegression()
-        regressor.fit(z.values[:,i].reshape(-1, 1), scale(x).T)
-        scores.append(regressor.score(z.values[:,i].reshape(-1, 1), scale(x).T))
-    return z.iloc[:,pd.Series(scores)[pd.Series(scores) > threshold].index]
+        regressor.fit(z.values[:, i].reshape(-1, 1), scale(x).T)
+        scores.append(regressor.score(z.values[:, i].reshape(-1, 1), scale(x).T))
+    return z.iloc[:, pd.Series(scores)[pd.Series(scores) > threshold].index]
 
-def map_factors_to_feaures_using_linear_models(z,x):
+
+def map_factors_to_feaures_using_linear_models(z, x):
     """Get feature <-> latent factors mapping from linear models.
     Runs one univariate (multi-output) linear model per latent factor in `z`,
     predicting the values of the features `x`, in order to get weights
@@ -118,13 +134,13 @@ def map_factors_to_feaures_using_linear_models(z,x):
     ws = list()
     for i in range(z.shape[1]):
         regressor = LinearRegression()
-        regressor.fit(z.values[:,i].reshape(-1, 1), scale(x).T)
+        regressor.fit(z.values[:, i].reshape(-1, 1), scale(x).T)
         ws.append(regressor.coef_)
     W = pd.DataFrame(np.hstack(ws), index=x.index, columns=z.columns)
     return W
 
 
-def correlate_factors_and_features(z, concatenated_data, pval_threshold=.001):
+def correlate_factors_and_features(z, concatenated_data, pval_threshold=0.001):
     """Compute pearson correlation of latent factors with input features.
 
     Parameters
@@ -139,18 +155,23 @@ def correlate_factors_and_features(z, concatenated_data, pval_threshold=.001):
     """
     feature_scores = list()
     for j in range(z.shape[1]):
-        corrs = pd.DataFrame([stats.pearsonr(concatenated_data.iloc[:,i], z.iloc[:,j]) for i in range(concatenated_data.shape[1])],
-                            index=concatenated_data.columns, columns=['r', 'pval'])
-        corrs.loc[corrs.pval>pval_threshold, 'r'] = 0
+        corrs = pd.DataFrame(
+            [
+                stats.pearsonr(concatenated_data.iloc[:, i], z.iloc[:, j])
+                for i in range(concatenated_data.shape[1])
+            ],
+            index=concatenated_data.columns,
+            columns=["r", "pval"],
+        )
+        corrs.loc[corrs.pval > pval_threshold, "r"] = 0
         feature_scores.append(corrs.r)
 
     feature_s = pd.concat(feature_scores, axis=1)
-    feature_s.columns= [i for i in range(z.shape[1])]
+    feature_s.columns = [i for i in range(z.shape[1])]
     return feature_s
 
 
-
-def compute_roc(z, y, classifier=LinearSVC(C=.001), cv_folds=10):
+def compute_roc(z, y, classifier=LinearSVC(C=0.001), cv_folds=10):
     """Compute the ROC (false positive rate, true positive rate) using cross-validation.
 
     Parameters
@@ -168,18 +189,21 @@ def compute_roc(z, y, classifier=LinearSVC(C=.001), cv_folds=10):
     class_names = sorted(y.unique())
     z_to_use = z.loc[y.index]
     y_true_bin = label_binarize(y, classes=class_names)
-    y_proba = cross_val_predict(classifier, z_to_use, y, cv=cv_folds, method='decision_function')
+    y_proba = cross_val_predict(
+        classifier, z_to_use, y, cv=cv_folds, method="decision_function"
+    )
 
     # Compute ROC curve and ROC area for each class
     roc_curves = dict()
     for i, cl_name in enumerate(class_names):
         fpr, tpr, thresholds = roc_curve(y_true_bin[:, i], y_proba[:, i])
-        roc_curves[cl_name] = pd.concat([
-            pd.Series(fpr, name='FPR'),
-            pd.Series(tpr, name='TPR'),
-        ], axis=1)
+        roc_curves[cl_name] = pd.concat(
+            [pd.Series(fpr, name="FPR"), pd.Series(tpr, name="TPR")], axis=1
+        )
 
-    mean_fpr = np.unique(np.concatenate([roc_curves[cl_name].FPR for cl_name in class_names]))
+    mean_fpr = np.unique(
+        np.concatenate([roc_curves[cl_name].FPR for cl_name in class_names])
+    )
 
     # Then interpolate all ROC curves at this points
     mean_tpr = np.zeros_like(mean_fpr)
@@ -189,14 +213,15 @@ def compute_roc(z, y, classifier=LinearSVC(C=.001), cv_folds=10):
     # Finally average it
     mean_tpr /= len(class_names)
 
-    roc_curves["mean"] = pd.concat([
-        pd.Series(mean_fpr, name='FPR'),
-        pd.Series(mean_tpr, name='TPR'),
-    ], axis=1)
+    roc_curves["mean"] = pd.concat(
+        [pd.Series(mean_fpr, name="FPR"), pd.Series(mean_tpr, name="TPR")], axis=1
+    )
     return roc_curves
 
-def estimate_kaplan_meier(y, survival,
-    duration_column='duration', observed_column='observed'):
+
+def estimate_kaplan_meier(
+    y, survival, duration_column="duration", observed_column="observed"
+):
     """Estimate survival curves for groups defined in y based on survival data in ``survival``
 
     Parameters
@@ -221,18 +246,25 @@ def estimate_kaplan_meier(y, survival,
     try:
         import lifelines
     except ImportError:
-        raise ImportError('The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.')
+        raise ImportError(
+            "The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`."
+        )
     kmf = lifelines.KaplanMeierFitter()
     sfs = dict()
     for cl in y.unique():
-        ixs = list(set(y[y==cl].index) & set(survival.index))
-        kmf.fit(survival.loc[ixs][duration_column],
-            survival.loc[ixs][observed_column], label=cl)
+        ixs = list(set(y[y == cl].index) & set(survival.index))
+        kmf.fit(
+            survival.loc[ixs][duration_column],
+            survival.loc[ixs][observed_column],
+            label=cl,
+        )
         sfs[cl] = kmf.survival_function_
     return pd.concat([sfs[k] for k in sorted(y.unique())], axis=1).interpolate()
 
-def multivariate_logrank_test(y, survival,
-    duration_column='duration', observed_column='observed'):
+
+def multivariate_logrank_test(
+    y, survival, duration_column="duration", observed_column="observed"
+):
     """Compute the multivariate log-rank test for differential survival
     among the groups defined by ``y`` in the survival data in ``survival``,
     under the null-hypothesis that all groups have the same survival function
@@ -259,16 +291,26 @@ def multivariate_logrank_test(y, survival,
     try:
         import lifelines
     except ImportError:
-        raise ImportError('The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.')
+        raise ImportError(
+            "The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`."
+        )
     ixs = list(set(y.index) & set(survival.index))
-    mlr = lifelines.statistics.multivariate_logrank_test(survival.loc[ixs][duration_column],
-                                                         y.loc[ixs],
-                                                         survival.loc[ixs][observed_column])
+    mlr = lifelines.statistics.multivariate_logrank_test(
+        survival.loc[ixs][duration_column],
+        y.loc[ixs],
+        survival.loc[ixs][observed_column],
+    )
     return mlr.test_statistic, mlr.p_value
 
-def select_clinical_factors(z, survival,
-    duration_column='duration', observed_column='observed', alpha=.05,
-    cox_penalizer=0):
+
+def select_clinical_factors(
+    z,
+    survival,
+    duration_column="duration",
+    observed_column="observed",
+    alpha=0.05,
+    cox_penalizer=0,
+):
     """Select latent factors which are predictive of survival. This is
     accomplished by fitting a Cox Proportional Hazards (CPH) model to each
     latent factor, while controlling for known covariates, and only keeping
@@ -293,10 +335,12 @@ def select_clinical_factors(z, survival,
                 determined to have clinical value (are individually predictive
                 of survival, controlling for covariates)
     """
-    cox_coefficients = _cph_coefs(z, survival,
-        duration_column, observed_column, penalizer=cox_penalizer)
-    signif_cox_coefs = cox_coefficients.T[cox_coefficients.T.p<alpha]
-    return z.loc[:,signif_cox_coefs.index]
+    cox_coefficients = _cph_coefs(
+        z, survival, duration_column, observed_column, penalizer=cox_penalizer
+    )
+    signif_cox_coefs = cox_coefficients.T[cox_coefficients.T.p < alpha]
+    return z.loc[:, signif_cox_coefs.index]
+
 
 def _cph_coefs(z, survival, duration_column, observed_column, penalizer=0):
     """Compute one CPH model for each latent factor (column) in z.
@@ -305,15 +349,33 @@ def _cph_coefs(z, survival, duration_column, observed_column, penalizer=0):
     try:
         import lifelines
     except ImportError:
-        raise ImportError('The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.')
-    return pd.concat([
-        lifelines.CoxPHFitter(penalizer=penalizer).fit(survival.assign(LF=z.loc[:,i]).dropna(),
-            duration_column, observed_column).summary.loc['LF'].rename(i)
-        for i in z.columns], axis=1)
+        raise ImportError(
+            "The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`."
+        )
+    return pd.concat(
+        [
+            lifelines.CoxPHFitter(penalizer=penalizer)
+            .fit(
+                survival.assign(LF=z.loc[:, i]).dropna(),
+                duration_column,
+                observed_column,
+            )
+            .summary.loc["LF"]
+            .rename(i)
+            for i in z.columns
+        ],
+        axis=1,
+    )
 
-def compute_harrells_c(z, survival, duration_column='duration',
-    observed_column='observed', cox_penalties=[.1,1,10,100,1000,10000],
-    cv_folds=5):
+
+def compute_harrells_c(
+    z,
+    survival,
+    duration_column="duration",
+    observed_column="observed",
+    cox_penalties=[0.1, 1, 10, 100, 1000, 10000],
+    cv_folds=5,
+):
     """Compute's Harrell's c-Index for a Cox Proportional Hazards regression modeling
     survival by the latent factors in z.
 
@@ -337,29 +399,37 @@ def compute_harrells_c(z, survival, duration_column='duration',
         one value per cv_fold
 
     """
-    cvcs = [_cv_coxph_c(
-        z,
-        survival,
-        p,
-        duration_column,
-        observed_column,
-        cv_folds) for p in cox_penalties]
+    cvcs = [
+        _cv_coxph_c(z, survival, p, duration_column, observed_column, cv_folds)
+        for p in cox_penalties
+    ]
     return cvcs[np.argmax([np.median(e) for e in cvcs])]
 
-def _cv_coxph_c(z, survival, penalty,
-    duration_column='duration', observed_column='observed', cv_folds=5):
+
+def _cv_coxph_c(
+    z,
+    survival,
+    penalty,
+    duration_column="duration",
+    observed_column="observed",
+    cv_folds=5,
+):
     try:
         import lifelines
         import lifelines.utils
     except ImportError:
-        raise ImportError('The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.')
+        raise ImportError(
+            "The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`."
+        )
 
     cph = lifelines.CoxPHFitter(penalizer=penalty)
     survdf = pd.concat([survival, z], axis=1, sort=False).dropna()
 
-    scores = lifelines.utils.k_fold_cross_validation(cph,
-        survdf, duration_column, event_col=observed_column, k=cv_folds)
+    scores = lifelines.utils.k_fold_cross_validation(
+        cph, survdf, duration_column, event_col=observed_column, k=cv_folds
+    )
     return scores
+
 
 def scale(df):
     """Scale and center data
@@ -373,6 +443,4 @@ def scale(df):
     scaled: pd.DataFrame (n_features, n_samples) scaled data
     """
     df_scaled = StandardScaler().fit_transform(df.T)
-    return pd.DataFrame(df_scaled,
-        columns=df.index,
-        index=df.columns).T
+    return pd.DataFrame(df_scaled, columns=df.index, index=df.columns).T

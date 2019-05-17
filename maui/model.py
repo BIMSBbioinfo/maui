@@ -2,7 +2,7 @@ import maui.utils
 import numpy as np
 import pandas as pd
 from functools import partial
-from scipy import spatial,cluster
+from scipy import spatial, cluster
 from sklearn.cluster import KMeans
 from sklearn.base import BaseEstimator
 from .autoencoders_architectures import stacked_vae, deep_vae
@@ -36,15 +36,22 @@ class Maui(BaseEstimator):
         (latent) layer is variational.
     """
 
-    def __init__(self, n_hidden=[1500], n_latent=80, batch_size=100,
-        epochs=400, architecture='stacked', **kwargs):
+    def __init__(
+        self,
+        n_hidden=[1500],
+        n_latent=80,
+        batch_size=100,
+        epochs=400,
+        architecture="stacked",
+        **kwargs,
+    ):
         self.n_hidden = n_hidden
         self.n_latent = n_latent
         self.batch_size = batch_size
         self.epochs = epochs
-        if architecture == 'stacked':
+        if architecture == "stacked":
             self.architecture = partial(stacked_vae, **kwargs)
-        elif architecture == 'deep':
+        elif architecture == "deep":
             self.architecture = partial(deep_vae, **kwargs)
         else:
             raise ValueError("architecture must be one of 'stacked' or 'deep'")
@@ -69,9 +76,13 @@ class Maui(BaseEstimator):
         self.x_ = self._dict2array(X)
         x_test = self._dict2array(X_validation) if X_validation else self.x_
         hist, vae, encoder, sampling_encoder, decoder = self.architecture(
-            self.x_, x_test,
-            hidden_dims=self.n_hidden, latent_dim=self.n_latent,
-            batch_size=self.batch_size, epochs=self.epochs)
+            self.x_,
+            x_test,
+            hidden_dims=self.n_hidden,
+            latent_dim=self.n_latent,
+            batch_size=self.batch_size,
+            epochs=self.epochs,
+        )
         self.hist = pd.DataFrame(hist.history)
         self.vae = vae
         self.encoder = encoder
@@ -79,7 +90,7 @@ class Maui(BaseEstimator):
         self.decoder = decoder
         return self
 
-    def transform(self, X, encoder='mean'):
+    def transform(self, X, encoder="mean"):
         """Transform X into the latent space that was previously learned using
         `fit` or `fit_transform`, and return the latent factor representation.
 
@@ -99,22 +110,26 @@ class Maui(BaseEstimator):
         z:  DataFrame (n_samples, n_latent_factors)
             Latent factors representation of the data X.
         """
-        if encoder == 'mean':
+        if encoder == "mean":
             the_encoder = self.encoder
-        elif encoder == 'sample':
+        elif encoder == "sample":
             the_encoder = self.sampling_encoder
         else:
             raise ValueError("`encoder` must be one of 'mean' or 'sample'")
 
         self.x_ = self._dict2array(X)
-        self.z_ = pd.DataFrame(the_encoder.predict(self.x_),
+        self.z_ = pd.DataFrame(
+            the_encoder.predict(self.x_),
             index=self.x_.index,
-            columns=[f'LF{i}' for i in range(1,self.n_latent+1)])
-        self.feature_correlations = maui.utils.correlate_factors_and_features(self.z_, self.x_)
+            columns=[f"LF{i}" for i in range(1, self.n_latent + 1)],
+        )
+        self.feature_correlations = maui.utils.correlate_factors_and_features(
+            self.z_, self.x_
+        )
         self.w_ = None
         return self.z_
 
-    def fit_transform(self, X, y=None, X_validation=None, encoder='mean'):
+    def fit_transform(self, X, y=None, X_validation=None, encoder="mean"):
         """Train autoencoder model, and return the latent factor representation
         of the data X.
 
@@ -136,9 +151,14 @@ class Maui(BaseEstimator):
         self.fit(X, X_validation=X_validation, y=y)
         return self.transform(X, encoder=encoder)
 
-    def cluster(self, k=None, optimal_k_method='ami',
-        optimal_k_range=range(3,10), ami_y=None,
-        kmeans_kwargs={'n_init': 1000, 'n_jobs': 2}):
+    def cluster(
+        self,
+        k=None,
+        optimal_k_method="ami",
+        optimal_k_range=range(3, 10),
+        ami_y=None,
+        kmeans_kwargs={"n_init": 1000, "n_jobs": 2},
+    ):
         """Cluster the samples using k-means based on the latent factors.
 
         Parameters
@@ -162,29 +182,48 @@ class Maui(BaseEstimator):
         yhat:   Series (n_samples) cluster labels for each sample
         """
         if k is not None:
-            return pd.Series(KMeans(k, **kmeans_kwargs).fit_predict(self.z_), index=self.z_.index)
+            return pd.Series(
+                KMeans(k, **kmeans_kwargs).fit_predict(self.z_), index=self.z_.index
+            )
         else:
-            if optimal_k_method == 'ami':
+            if optimal_k_method == "ami":
                 from sklearn.metrics import adjusted_mutual_info_score
+
                 if ami_y is None:
-                    raise Exception("Must provide ``ami_y`` if using 'ami' to select optimal K.")
+                    raise Exception(
+                        "Must provide ``ami_y`` if using 'ami' to select optimal K."
+                    )
                 z_to_use = self.z_.loc[ami_y.index]
                 scorer = lambda yhat: adjusted_mutual_info_score(ami_y, yhat)
-            elif optimal_k_method == 'silhouette':
+            elif optimal_k_method == "silhouette":
                 from sklearn.metrics import silhouette_score
+
                 z_to_use = self.z_
                 scorer = lambda yhat: silhouette_score(z_to_use, yhat)
             else:
                 z_to_use = self.z_
                 scorer = optimal_k_method
-            yhats = { k: pd.Series(KMeans(k, **kmeans_kwargs).fit_predict(z_to_use), index=z_to_use.index) for k in optimal_k_range }
-            score_name = optimal_k_method if isinstance(optimal_k_method, str) else optimal_k_method.__name__
-            self.kmeans_scores = pd.Series([scorer(yhats[k]) for k in optimal_k_range], index=optimal_k_range, name=score_name)
-            self.kmeans_scores.index.name = 'K'
+            yhats = {
+                k: pd.Series(
+                    KMeans(k, **kmeans_kwargs).fit_predict(z_to_use),
+                    index=z_to_use.index,
+                )
+                for k in optimal_k_range
+            }
+            score_name = (
+                optimal_k_method
+                if isinstance(optimal_k_method, str)
+                else optimal_k_method.__name__
+            )
+            self.kmeans_scores = pd.Series(
+                [scorer(yhats[k]) for k in optimal_k_range],
+                index=optimal_k_range,
+                name=score_name,
+            )
+            self.kmeans_scores.index.name = "K"
             self.optimal_k_ = np.argmax(self.kmeans_scores)
             self.yhat_ = yhats[self.optimal_k_]
             return self.yhat_
-
 
     def compute_roc(self, y, **kwargs):
         """Compute Receiver Operating Characteristics curve for SVM prediction
@@ -222,15 +261,20 @@ class Maui(BaseEstimator):
         aucs:   pd.Series, auc per class as well as mean
         """
         self.compute_roc(y, **kwargs)
-        self.aucs_ = { k: maui.utils.auc(
-            self.roc_curves_[k].FPR,
-            self.roc_curves_[k].TPR) for k in self.roc_curves_ }
+        self.aucs_ = {
+            k: maui.utils.auc(self.roc_curves_[k].FPR, self.roc_curves_[k].TPR)
+            for k in self.roc_curves_
+        }
         return self.aucs_
 
-
-    def select_clinical_factors(self, survival,
-        duration_column='duration', observed_column='observed',
-        alpha=.05, cox_penalizer=0):
+    def select_clinical_factors(
+        self,
+        survival,
+        duration_column="duration",
+        observed_column="observed",
+        alpha=0.05,
+        cox_penalizer=0,
+    ):
         """Select latent factors which are predictive of survival. This is
         accomplished by fitting a Cox Proportional Hazards (CPH) model to each
         latent factor, while controlling for known covariates, and only keeping
@@ -255,15 +299,27 @@ class Maui(BaseEstimator):
                     determined to have clinical value (are individually predictive
                     of survival, controlling for covariates)
         """
-        self.z_clinical_ = maui.utils.select_clinical_factors(self.z_, survival,
-            duration_column=duration_column, observed_column=observed_column,
-            alpha=alpha, cox_penalizer=cox_penalizer)
+        self.z_clinical_ = maui.utils.select_clinical_factors(
+            self.z_,
+            survival,
+            duration_column=duration_column,
+            observed_column=observed_column,
+            alpha=alpha,
+            cox_penalizer=cox_penalizer,
+        )
         return self.z_clinical_
 
-    def c_index(self, survival, clinical_only=True,
-        duration_column='duration', observed_column='observed',
-        cox_penalties=[.1,1,10,100,1000,10000],
-        cv_folds=5, sel_clin_alpha=.05, sel_clin_penalty=0):
+    def c_index(
+        self,
+        survival,
+        clinical_only=True,
+        duration_column="duration",
+        observed_column="observed",
+        cox_penalties=[0.1, 1, 10, 100, 1000, 10000],
+        cv_folds=5,
+        sel_clin_alpha=0.05,
+        sel_clin_penalty=0,
+    ):
         """Compute's Harrell's c-Index for a Cox Proportional Hazards regression modeling
         survival by the latent factors in z.
 
@@ -293,13 +349,18 @@ class Maui(BaseEstimator):
 
         """
         if clinical_only:
-            z = self.select_clinical_factors(survival, duration_column,
-                observed_column, sel_clin_alpha, sel_clin_penalty)
+            z = self.select_clinical_factors(
+                survival,
+                duration_column,
+                observed_column,
+                sel_clin_alpha,
+                sel_clin_penalty,
+            )
         else:
             z = self.z_
-        return maui.utils.compute_harrells_c(z, survival,
-            duration_column, observed_column,
-            cox_penalties, cv_folds)
+        return maui.utils.compute_harrells_c(
+            z, survival, duration_column, observed_column, cox_penalties, cv_folds
+        )
 
     def get_linear_weights(self):
         """Get linear model coefficients obtained from fitting linear models
@@ -312,11 +373,13 @@ class Maui(BaseEstimator):
             w_{ij} is the coefficient associated with feature `i` in a linear model
             predicting it from latent factor `j`.
         """
-        if not hasattr(self, 'w_') or self.w_ is None:
-            self.w_ = maui.utils.map_factors_to_feaures_using_linear_models(self.z_, self.x_.T)
+        if not hasattr(self, "w_") or self.w_ is None:
+            self.w_ = maui.utils.map_factors_to_feaures_using_linear_models(
+                self.z_, self.x_.T
+            )
         return self.w_
 
-    def drop_unexplanatory_factors(self, threshold=.02):
+    def drop_unexplanatory_factors(self, threshold=0.02):
         """Drops factors which have a low R^2 score in a univariate linear model
         predicting the features `x` from a column of the latent factors `z`.
 
@@ -332,14 +395,21 @@ class Maui(BaseEstimator):
                     above the threshold when using that column as an input
                     to a linear model predicting `x`.
         """
-        if not hasattr(self, 'z_') or self.z_ is None:
+        if not hasattr(self, "z_") or self.z_ is None:
             raise Exception("Must first transform some data in order to drop columns.")
         self.z_ = maui.utils.filter_factors_by_r2(self.z_, self.x_.T, threshold)
         return self.z_
 
-    def merge_similar_latent_factors(self, distance_in='z', distance_metric='correlation',
-        linkage_method='complete', distance_threshold=0.17, merge_fn=np.mean,
-        plot_dendrogram=True, plot_dendro_ax=None):
+    def merge_similar_latent_factors(
+        self,
+        distance_in="z",
+        distance_metric="correlation",
+        linkage_method="complete",
+        distance_threshold=0.17,
+        merge_fn=np.mean,
+        plot_dendrogram=True,
+        plot_dendro_ax=None,
+    ):
         """Merge latent factorz in z whose distance is below a certain threshold.
         Used to squeeze down latent factor representations if there are many co-linear
         latent factors.
@@ -367,24 +437,38 @@ class Maui(BaseEstimator):
         z:                  (n_samples, n_factors) pd.DataFrame of latent factors
                             where some have been merged
         """
-        if not hasattr(self, 'z_') or self.z_ is None:
-            raise Exception('Cannot merge latent factors before fitting/transforming some.')
+        if not hasattr(self, "z_") or self.z_ is None:
+            raise Exception(
+                "Cannot merge latent factors before fitting/transforming some."
+            )
 
-        if distance_in == 'z':
-            self.z_ = maui.utils.merge_factors(self.z_, threshold=distance_threshold,
-                merge_fn=merge_fn, metric=distance_metric, linkage=linkage_method,
-                plot_dendro=plot_dendrogram, plot_dendro_ax=plot_dendro_ax)
-        elif distance_in == 'w':
+        if distance_in == "z":
+            self.z_ = maui.utils.merge_factors(
+                self.z_,
+                threshold=distance_threshold,
+                merge_fn=merge_fn,
+                metric=distance_metric,
+                linkage=linkage_method,
+                plot_dendro=plot_dendrogram,
+                plot_dendro_ax=plot_dendro_ax,
+            )
+        elif distance_in == "w":
             w = self.get_linear_weights()
             d = spatial.distance.pdist(w.T, distance_metric)
             l = cluster.hierarchy.linkage(d, linkage_method)
-            self.z_ = maui.utils.merge_factors(self.z_, l=l,
-                threshold=distance_threshold, merge_fn=merge_fn,
-                plot_dendro=plot_dendrogram, plot_dendro_ax=plot_dendro_ax)
+            self.z_ = maui.utils.merge_factors(
+                self.z_,
+                l=l,
+                threshold=distance_threshold,
+                merge_fn=merge_fn,
+                plot_dendro=plot_dendrogram,
+                plot_dendro_ax=plot_dendro_ax,
+            )
         else:
-            raise Exception("Only 'z' and 'w' currently supported. See ``maui.utils.merge_factors for more flexibility.``")
+            raise Exception(
+                "Only 'z' and 'w' currently supported. See ``maui.utils.merge_factors for more flexibility.``"
+            )
         return self.z_
-
 
     def _validate_X(self, X):
         if not isinstance(X, dict):
@@ -394,7 +478,7 @@ class Maui(BaseEstimator):
         if any(df.columns.tolist() != df1.columns.tolist() for df in X.values()):
             raise ValueError("All dataframes must have same samples (columns)")
 
-        if any(len(df.index)==0 for df in X.values()):
+        if any(len(df.index) == 0 for df in X.values()):
             raise ValueError("One of the DataFrames was empty.")
 
         return True
@@ -404,8 +488,10 @@ class Maui(BaseEstimator):
 
     def _dict2array(self, X):
         self._validate_X(X)
-        new_feature_names = [f'{k}: {c}' for k in sorted(X.keys()) for c in X[k].index]
+        new_feature_names = [f"{k}: {c}" for k in sorted(X.keys()) for c in X[k].index]
         sample_names = X[list(X.keys())[0]].columns
-        return pd.DataFrame(np.vstack([X[k] for k in sorted(X.keys())]).T,
+        return pd.DataFrame(
+            np.vstack([X[k] for k in sorted(X.keys())]).T,
             index=sample_names,
-            columns=new_feature_names)
+            columns=new_feature_names,
+        )
