@@ -5,7 +5,7 @@ from functools import partial
 from scipy import spatial, cluster
 from sklearn.cluster import KMeans
 from sklearn.base import BaseEstimator
-from .autoencoders_architectures import stacked_vae, deep_vae
+from .autoencoders_architectures import stacked_vae, deep_vae, train_model
 
 
 class Maui(BaseEstimator):
@@ -43,18 +43,56 @@ class Maui(BaseEstimator):
         batch_size=100,
         epochs=400,
         architecture="stacked",
-        **kwargs,
+        initial_beta_val=0,
+        kappa=1.0,
+        max_beta_val=1,
+        learning_rate=0.0005,
+        epsilon_std=1.0,
+        batch_normalize_inputs=True,
+        batch_normalize_intermediaries=True,
+        batch_normalize_embedding=True,
+        relu_intermediaries=True,
+        relu_embedding=True,
     ):
         self.n_hidden = n_hidden
         self.n_latent = n_latent
         self.batch_size = batch_size
         self.epochs = epochs
+
         if architecture == "stacked":
-            self.architecture = partial(stacked_vae, **kwargs)
+            self.architecture = partial(
+                stacked_vae,
+                initial_beta_val=initial_beta_val,
+                kappa=kappa,
+                max_beta_val=max_beta_val,
+                learning_rate=learning_rate,
+                epsilon_std=epsilon_std,
+                batch_normalize_inputs=batch_normalize_inputs,
+                batch_normalize_intermediaries=batch_normalize_intermediaries,
+                relu_intermediaries=relu_intermediaries,
+                relu_embedding=relu_embedding,
+            )
         elif architecture == "deep":
-            self.architecture = partial(deep_vae, **kwargs)
+            self.architecture = partial(
+                deep_vae,
+                initial_beta_val=initial_beta_val,
+                kappa=kappa,
+                max_beta_val=max_beta_val,
+                learning_rate=learning_rate,
+                epsilon_std=epsilon_std,
+                batch_normalize_inputs=batch_normalize_inputs,
+                relu_embedding=relu_embedding,
+            )
         else:
             raise ValueError("architecture must be one of 'stacked' or 'deep'")
+
+        self.training_fn = partial(
+            train_model,
+            epochs=epochs,
+            batch_size=batch_size,
+            kappa=kappa,
+            max_beta_val=max_beta_val,
+        )
 
     def fit(self, X, y=None, X_validation=None):
         """Train autoencoder model
@@ -75,7 +113,7 @@ class Maui(BaseEstimator):
         """
         self.x_ = self._dict2array(X)
         x_test = self._dict2array(X_validation) if X_validation else self.x_
-        hist, vae, encoder, sampling_encoder, decoder = self.architecture(
+        vae, encoder, sampling_encoder, decoder, beta = self.architecture(
             self.x_,
             x_test,
             hidden_dims=self.n_hidden,
@@ -83,6 +121,8 @@ class Maui(BaseEstimator):
             batch_size=self.batch_size,
             epochs=self.epochs,
         )
+        hist = self.training_fn(vae=vae, x_train=self.x_, x_val=x_test, beta=beta)
+        self.beta = beta
         self.hist = pd.DataFrame(hist.history)
         self.vae = vae
         self.encoder = encoder
