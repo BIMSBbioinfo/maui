@@ -1,4 +1,6 @@
+import os
 import pytest
+import tempfile
 from unittest import mock
 
 import numpy as np
@@ -489,4 +491,28 @@ def test_maui_merge_latent_factors_complains_if_unknown_merge_by():
     with pytest.raises(Exception):
         z_merged = maui_model.merge_similar_latent_factors(
             distance_in="xxx", distance_metric="euclidean"
+        )
+
+def test_maui_can_save_to_folder():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model = maui_model.fit({"d1": df1, "d2": df2})
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        maui_model.save(tmpdirname)
+        assert os.path.isfile(os.path.join(tmpdirname, 'maui_weights.h5'))
+        assert os.path.isfile(os.path.join(tmpdirname, 'maui_args.json'))
+
+
+def test_maui_can_load_from_folder():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model = maui_model.fit({"d1": df1, "d2": df2})
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        maui_model.save(tmpdirname)
+        maui_model_from_disk = Maui.load(tmpdirname)
+
+    assert maui_model_from_disk.n_latent == maui_model.n_latent
+    assert np.allclose(maui_model.vae.get_weights()[0],
+        maui_model_from_disk.vae.get_weights()[0])
+    assert np.allclose(
+        maui_model.transform({"d1": df1, "d2": df2}),
+        maui_model_from_disk.transform({"d1": df1, "d2": df2})
         )

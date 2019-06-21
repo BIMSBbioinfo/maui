@@ -53,7 +53,9 @@ class Maui(BaseEstimator):
         batch_normalize_embedding=True,
         relu_intermediaries=True,
         relu_embedding=True,
+        input_dim=None,
     ):
+        self.init_args = {k: v for k, v in locals().items() if k != "self"}
         self.n_hidden = n_hidden
         self.n_latent = n_latent
         self.batch_size = batch_size
@@ -86,6 +88,20 @@ class Maui(BaseEstimator):
         else:
             raise ValueError("architecture must be one of 'stacked' or 'deep'")
 
+        if input_dim is not None:
+            vae, encoder, sampling_encoder, decoder, beta = self.architecture(
+                input_dim,
+                hidden_dims=self.n_hidden,
+                latent_dim=self.n_latent,
+                batch_size=self.batch_size,
+                epochs=self.epochs,
+            )
+            self.beta = beta
+            self.vae = vae
+            self.encoder = encoder
+            self.sampling_encoder = sampling_encoder
+            self.decoder = decoder
+
         self.training_fn = partial(
             train_model,
             epochs=epochs,
@@ -113,14 +129,16 @@ class Maui(BaseEstimator):
         """
         self.x_ = self._dict2array(X)
         x_test = self._dict2array(X_validation) if X_validation else self.x_
-        vae, encoder, sampling_encoder, decoder, beta = self.architecture(
-            self.x_,
-            x_test,
-            hidden_dims=self.n_hidden,
-            latent_dim=self.n_latent,
-            batch_size=self.batch_size,
-            epochs=self.epochs,
-        )
+
+        if not hasattr(self, "vae"):
+            vae, encoder, sampling_encoder, decoder, beta = self.architecture(
+                self.x_.shape[1],
+                hidden_dims=self.n_hidden,
+                latent_dim=self.n_latent,
+                batch_size=self.batch_size,
+                epochs=self.epochs,
+            )
+            self.init_args["input_dim"] = self.x_.shape[1]
         hist = self.training_fn(vae=vae, x_train=self.x_, x_val=x_test, beta=beta)
         self.beta = beta
         self.hist = pd.DataFrame(hist.history)
@@ -509,6 +527,44 @@ class Maui(BaseEstimator):
                 "Only 'z' and 'w' currently supported. See ``maui.utils.merge_factors for more flexibility.``"
             )
         return self.z_
+
+    def save(self, destdir):
+        """Save a maui model to disk, so that it may be reloaded later using ``load()``
+
+        Parameters
+        ----------
+
+        destdir:    destination directory in which to save model files
+        """
+        import os
+        import json
+
+        with open(os.path.join(destdir, "maui_args.json"), "wt") as outfile:
+            json.dump(self.init_args, outfile)
+        self.vae.save_weights(os.path.join(destdir, "maui_weights.h5"))
+
+    @staticmethod
+    def load(dir):
+        """Load a maui model from disk, which was previously saved using ``save()``
+
+        Parameters
+        ----------
+
+        dir:    The directory from which to load the maui model
+
+        Returns
+        -------
+
+        maui_model: a maui model that was previously saved to disk
+        """
+        import os
+        import json
+
+        with open(os.path.join(dir, "maui_args.json"), "rt") as infile:
+            init_args = json.load(infile)
+        maui_model = Maui(**init_args)
+        maui_model.vae.load_weights(os.path.join(dir, "maui_weights.h5"))
+        return maui_model
 
     def _validate_X(self, X):
         if not isinstance(X, dict):

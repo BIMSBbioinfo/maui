@@ -69,8 +69,7 @@ def make_variational_layer(
 
 
 def stacked_vae(
-    x_train,
-    x_val,
+    input_dim,
     hidden_dims=[300],
     latent_dim=100,
     initial_beta_val=0,
@@ -111,7 +110,7 @@ def stacked_vae(
     beta = K.variable(initial_beta_val, name="beta")
 
     # Input place holder for RNAseq data with specific input size
-    original_dim = x_train.shape[1]
+    original_dim = input_dim
 
     # Input place holder for RNAseq data with specific input size
     rnaseq_input = Input(shape=(original_dim,), name="input")
@@ -281,8 +280,7 @@ def train_model(vae, x_train, epochs, batch_size, x_val, beta, kappa, max_beta_v
 
 
 def deep_vae(
-    x_train,
-    x_val,
+    input_dim,
     hidden_dims=[300],
     latent_dim=100,
     initial_beta_val=0,
@@ -319,7 +317,7 @@ def deep_vae(
     beta = K.variable(initial_beta_val)
 
     # Input place holder for RNAseq data with specific input size
-    original_dim = x_train.shape[1]
+    original_dim = input_dim
 
     # Input place holder for RNAseq data with specific input size
     rnaseq_input = Input(shape=(original_dim,), name="input")
