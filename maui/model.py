@@ -88,6 +88,9 @@ class Maui(BaseEstimator):
         else:
             raise ValueError("architecture must be one of 'stacked' or 'deep'")
 
+        # typically, a user will not give input_dim
+        # then, self.architecture() will be called on first fit()
+        # if input_dim given (e.g. when load()ing from disk), self.architecture() will be called here.
         if input_dim is not None:
             vae, encoder, sampling_encoder, decoder, beta = self.architecture(
                 input_dim,
@@ -139,13 +142,13 @@ class Maui(BaseEstimator):
                 epochs=self.epochs,
             )
             self.init_args["input_dim"] = self.x_.shape[1]
+            self.beta = beta
+            self.vae = vae
+            self.encoder = encoder
+            self.sampling_encoder = sampling_encoder
+            self.decoder = decoder
         hist = self.training_fn(vae=vae, x_train=self.x_, x_val=x_test, beta=beta)
-        self.beta = beta
         self.hist = pd.DataFrame(hist.history)
-        self.vae = vae
-        self.encoder = encoder
-        self.sampling_encoder = sampling_encoder
-        self.decoder = decoder
         return self
 
     def transform(self, X, encoder="mean"):
