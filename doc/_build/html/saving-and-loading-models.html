@@ -1,0 +1,156 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Saving and loading models &#8212;  0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="shortcut icon" href="_static/icons8-beach-30.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The Maui Class" href="maui.html" />
+    <link rel="prev" title="Filtering and Merging latent factors" href="filtering-and-merging-latent-factors.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="saving-and-loading-models">
+<h1>Saving and loading models<a class="headerlink" href="#saving-and-loading-models" title="Permalink to this headline">¶</a></h1>
+<p>Maui models may be saved to disk, so that they may be loaded again at a later time.</p>
+<div class="section" id="saving-a-trained-model-to-disk">
+<h2>Saving a trained model to disk<a class="headerlink" href="#saving-a-trained-model-to-disk" title="Permalink to this headline">¶</a></h2>
+<p>Saving a model to disk involves saving two files to a target directory. These files store the model weights and the maui parameters (the arguments the maui model was instantiated with). <a class="reference internal" href="maui.html"><span class="doc">The Maui Class</span></a> implements a the save function</p>
+<dl class="function">
+<dt id="maui.Maui.save">
+<code class="descclassname">maui.Maui.</code><code class="descname">save</code><span class="sig-paren">(</span><em>self</em>, <em>destdir</em><span class="sig-paren">)</span><a class="headerlink" href="#maui.Maui.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save a maui model to disk, so that it may be reloaded later using <code class="docutils literal notranslate"><span class="pre">load()</span></code></p>
+<p>destdir:    destination directory in which to save model files</p>
+</dd></dl>
+
+<p>The function takes one required parameter, the destination directory where the two files will be saved. It is called directly on a maui model, like</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">maui_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;/path/to/dir&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="loading-a-model-from-disk">
+<h2>Loading a model from disk<a class="headerlink" href="#loading-a-model-from-disk" title="Permalink to this headline">¶</a></h2>
+<p>Loading a model involves instantiating a new Maui instance using the parameters that were used on the model that is saved to disk, and then populating the weights of the model to the previously trained weights. Once a model is loaded, it can be used to transform new data to the latent space, or it can be trained further. <a class="reference internal" href="maui.html"><span class="doc">The Maui Class</span></a> has a static function to load a model from disk</p>
+<dl class="function">
+<dt id="maui.Maui.load">
+<code class="descclassname">maui.Maui.</code><code class="descname">load</code><span class="sig-paren">(</span><em>dir</em><span class="sig-paren">)</span><a class="headerlink" href="#maui.Maui.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a maui model from disk, which was previously saved using <code class="docutils literal notranslate"><span class="pre">save()</span></code></p>
+<p>dir:    The directory from which to load the maui model</p>
+<p>maui_model: a maui model that was previously saved to disk</p>
+</dd></dl>
+
+<p>It is called directly on the Maui class, like</p>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="n">maui</span><span class="p">.</span><span class="n">Maui</span><span class="p">.</span><span class="k">load</span><span class="p">(</span><span class="s1">&#39;/path/to/dir&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/hex-maui.png" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="index.html"></a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="autoencoder-integration.html">Multi-modal Autoencoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data-normalization.html">Data and Normalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filtering-and-merging-latent-factors.html">Filtering and Merging latent factors</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Saving and loading models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#saving-a-trained-model-to-disk">Saving a trained model to disk</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#loading-a-model-from-disk">Loading a model from disk</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="maui.html">The Maui Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Maui Utilities</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="filtering-and-merging-latent-factors.html" title="previous chapter">Filtering and Merging latent factors</a></li>
+      <li>Next: <a href="maui.html" title="next chapter">The Maui Class</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Jonathan Ronen, Altuna Akalin.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/saving-and-loading-models.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

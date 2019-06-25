@@ -18,7 +18,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Maui Utilities" href="utils.html" />
-    <link rel="prev" title="Data and Normalization" href="filtering-and-merging-latent-factors.html" />
+    <link rel="prev" title="Filtering and Merging latent factors" href="filtering-and-merging-latent-factors.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -39,7 +39,7 @@
 <h1>The Maui Class<a class="headerlink" href="#the-maui-class" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="maui.Maui">
-<em class="property">class </em><code class="descclassname">maui.</code><code class="descname">Maui</code><span class="sig-paren">(</span><em>n_hidden=[1500], n_latent=80, batch_size=100, epochs=400, architecture='stacked', **kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">maui.</code><code class="descname">Maui</code><span class="sig-paren">(</span><em>n_hidden=[1500], n_latent=80, batch_size=100, epochs=400, architecture='stacked', initial_beta_val=0, kappa=1.0, max_beta_val=1, learning_rate=0.0005, epsilon_std=1.0, batch_normalize_inputs=True, batch_normalize_intermediaries=True, batch_normalize_embedding=True, relu_intermediaries=True, relu_embedding=True, input_dim=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maui (Multi-omics Autoencoder Integration) model.</p>
 <p>Trains a variational autoencoder to find latent factors in multi-modal data.</p>
 <dl class="docutils">
@@ -206,6 +206,14 @@ predicting it from latent factor <cite>j</cite>.</dd>
 </dl>
 </dd></dl>
 
+<dl class="staticmethod">
+<dt id="maui.Maui.load">
+<em class="property">static </em><code class="descname">load</code><span class="sig-paren">(</span><em>dir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a maui model from disk, which was previously saved using <code class="docutils literal notranslate"><span class="pre">save()</span></code></p>
+<p>dir:    The directory from which to load the maui model</p>
+<p>maui_model: a maui model that was previously saved to disk</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="maui.Maui.merge_similar_latent_factors">
 <code class="descname">merge_similar_latent_factors</code><span class="sig-paren">(</span><em>distance_in='z'</em>, <em>distance_metric='correlation'</em>, <em>linkage_method='complete'</em>, <em>distance_threshold=0.17</em>, <em>merge_fn=&lt;function mean&gt;</em>, <em>plot_dendrogram=True</em>, <em>plot_dendro_ax=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui.merge_similar_latent_factors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui.merge_similar_latent_factors" title="Permalink to this definition">¶</a></dt>
@@ -233,6 +241,13 @@ latent factor will have the mean value of the inputs.</dd>
 <dt>z:                  (n_samples, n_factors) pd.DataFrame of latent factors</dt>
 <dd>where some have been merged</dd>
 </dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="maui.Maui.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>destdir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/maui/model.html#Maui.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#maui.Maui.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save a maui model to disk, so that it may be reloaded later using <code class="docutils literal notranslate"><span class="pre">load()</span></code></p>
+<p>destdir:    destination directory in which to save model files</p>
 </dd></dl>
 
 <dl class="method">
@@ -309,7 +324,7 @@ successive layer, and results in non-reproducible embeddings.</dd>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="autoencoder-integration.html">Multi-modal Autoencoders</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data-normalization.html">Data and Normalization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="filtering-and-merging-latent-factors.html">Data and Normalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="filtering-and-merging-latent-factors.html">Filtering and Merging latent factors</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">The Maui Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Maui Utilities</a></li>
 </ul>
@@ -318,7 +333,7 @@ successive layer, and results in non-reproducible embeddings.</dd>
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="filtering-and-merging-latent-factors.html" title="previous chapter">Data and Normalization</a></li>
+      <li>Previous: <a href="filtering-and-merging-latent-factors.html" title="previous chapter">Filtering and Merging latent factors</a></li>
       <li>Next: <a href="utils.html" title="next chapter">Maui Utilities</a></li>
   </ul></li>
 </ul>

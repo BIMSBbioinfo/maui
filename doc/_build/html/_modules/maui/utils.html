@@ -52,9 +52,17 @@
 <span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="k">import</span> <span class="n">LinearRegression</span>
 <span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">cross_val_predict</span>
 
-<div class="viewcode-block" id="merge_factors"><a class="viewcode-back" href="../../filtering-and-merging-latent-factors.html#maui.utils.merge_factors">[docs]</a><span class="k">def</span> <span class="nf">merge_factors</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=.</span><span class="mi">17</span><span class="p">,</span> <span class="n">merge_fn</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span>
-    <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;correlation&#39;</span><span class="p">,</span> <span class="n">linkage</span><span class="o">=</span><span class="s1">&#39;single&#39;</span><span class="p">,</span> <span class="n">plot_dendro</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">plot_dendro_ax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="merge_factors"><a class="viewcode-back" href="../../saving-and-loading-models.html#maui.utils.merge_factors">[docs]</a><span class="k">def</span> <span class="nf">merge_factors</span><span class="p">(</span>
+    <span class="n">z</span><span class="p">,</span>
+    <span class="n">l</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.17</span><span class="p">,</span>
+    <span class="n">merge_fn</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span>
+    <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;correlation&quot;</span><span class="p">,</span>
+    <span class="n">linkage</span><span class="o">=</span><span class="s2">&quot;single&quot;</span><span class="p">,</span>
+    <span class="n">plot_dendro</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">plot_dendro_ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Merge latent factors in `z` which form clusters, as defined by hierarchical</span>
 <span class="sd">    clustering where a cluster is formed by cutting at a pre-set threshold, i.e.</span>
 <span class="sd">    merge factors if their distance to one-another is below `threshold`.</span>
@@ -89,29 +97,36 @@
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;`plot_dendro` require matplotlib to be installed.&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">plot_dendro_ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">fig</span><span class="p">,</span> <span class="n">plot_dendro_ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
-        <span class="n">dendro</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">hierarchy</span><span class="o">.</span><span class="n">dendrogram</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">leaf_font_size</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">color_threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">plot_dendro_ax</span><span class="p">)</span>
-        <span class="n">plot_dendro_ax</span><span class="o">.</span><span class="n">hlines</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="o">*</span><span class="n">plot_dendro_ax</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">(),</span> <span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="s1">&#39;dashed&#39;</span><span class="p">)</span>
+            <span class="n">fig</span><span class="p">,</span> <span class="n">plot_dendro_ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="n">dendro</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">hierarchy</span><span class="o">.</span><span class="n">dendrogram</span><span class="p">(</span>
+            <span class="n">l</span><span class="p">,</span> <span class="n">leaf_font_size</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">color_threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">plot_dendro_ax</span>
+        <span class="p">)</span>
+        <span class="n">plot_dendro_ax</span><span class="o">.</span><span class="n">hlines</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="o">*</span><span class="n">plot_dendro_ax</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">(),</span> <span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;dashed&quot;</span><span class="p">)</span>
 
     <span class="n">cl_labels</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">hierarchy</span><span class="o">.</span><span class="n">cut_tree</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">factors_to_delete</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="n">new_factors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">cl</span><span class="p">,</span><span class="n">ct</span> <span class="ow">in</span> <span class="n">Counter</span><span class="p">(</span><span class="n">cl_labels</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">ct</span><span class="o">&lt;</span><span class="mi">2</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">cl</span><span class="p">,</span> <span class="n">ct</span> <span class="ow">in</span> <span class="n">Counter</span><span class="p">(</span><span class="n">cl_labels</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">ct</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">tomerge</span> <span class="o">=</span> <span class="p">(</span><span class="n">cl_labels</span><span class="o">==</span><span class="n">cl</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">tomerge</span> <span class="o">=</span> <span class="p">(</span><span class="n">cl_labels</span> <span class="o">==</span> <span class="n">cl</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">factors_to_delete</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">tomerge</span><span class="p">)</span>
-        <span class="n">new_factors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">merge_fn</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span><span class="n">tomerge</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
-            <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tomerge</span><span class="p">)))</span>
+        <span class="n">new_factors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">merge_fn</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">tomerge</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+                <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tomerge</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
 
     <span class="n">new_z</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">new_z</span> <span class="o">=</span> <span class="n">new_z</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">new_z</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">factors_to_delete</span><span class="p">]]</span>
-    <span class="n">new_z</span> <span class="o">=</span> <span class="n">new_z</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">new_z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">factors_to_delete</span><span class="p">]]</span>
+    <span class="n">new_z</span> <span class="o">=</span> <span class="n">new_z</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">new_z</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">factors_to_delete</span><span class="p">]]</span>
+    <span class="n">new_z</span> <span class="o">=</span> <span class="n">new_z</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span>
+        <span class="p">:,</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">new_z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">factors_to_delete</span><span class="p">]</span>
+    <span class="p">]</span>
     <span class="n">new_z</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">new_z</span><span class="p">]</span> <span class="o">+</span> <span class="n">new_factors</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">new_z</span></div>
 
 
-<div class="viewcode-block" id="filter_factors_by_r2"><a class="viewcode-back" href="../../filtering-and-merging-latent-factors.html#maui.utils.filter_factors_by_r2">[docs]</a><span class="k">def</span> <span class="nf">filter_factors_by_r2</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=.</span><span class="mi">02</span><span class="p">):</span>
+<div class="viewcode-block" id="filter_factors_by_r2"><a class="viewcode-back" href="../../utils.html#maui.utils.filter_factors_by_r2">[docs]</a><span class="k">def</span> <span class="nf">filter_factors_by_r2</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.02</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Filter latent factors by the R^2 of a linear model predicting features x</span>
 <span class="sd">    from latent factors z.</span>
 
@@ -130,11 +145,12 @@
     <span class="n">scores</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
         <span class="n">regressor</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span>
-        <span class="n">regressor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">scale</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
-        <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">regressor</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">scale</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">z</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">scores</span><span class="p">)[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">]</span></div>
+        <span class="n">regressor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">scale</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">regressor</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">scale</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">z</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">scores</span><span class="p">)[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="map_factors_to_feaures_using_linear_models"><a class="viewcode-back" href="../../utils.html#maui.utils.map_factors_to_feaures_using_linear_models">[docs]</a><span class="k">def</span> <span class="nf">map_factors_to_feaures_using_linear_models</span><span class="p">(</span><span class="n">z</span><span class="p">,</span><span class="n">x</span><span class="p">):</span>
+
+<div class="viewcode-block" id="map_factors_to_feaures_using_linear_models"><a class="viewcode-back" href="../../utils.html#maui.utils.map_factors_to_feaures_using_linear_models">[docs]</a><span class="k">def</span> <span class="nf">map_factors_to_feaures_using_linear_models</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Get feature &lt;-&gt; latent factors mapping from linear models.</span>
 <span class="sd">    Runs one univariate (multi-output) linear model per latent factor in `z`,</span>
 <span class="sd">    predicting the values of the features `x`, in order to get weights</span>
@@ -154,13 +170,13 @@
     <span class="n">ws</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
         <span class="n">regressor</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span>
-        <span class="n">regressor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">scale</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">regressor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">scale</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
         <span class="n">ws</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">regressor</span><span class="o">.</span><span class="n">coef_</span><span class="p">)</span>
     <span class="n">W</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">ws</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">W</span></div>
 
 
-<div class="viewcode-block" id="correlate_factors_and_features"><a class="viewcode-back" href="../../utils.html#maui.utils.correlate_factors_and_features">[docs]</a><span class="k">def</span> <span class="nf">correlate_factors_and_features</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">concatenated_data</span><span class="p">,</span> <span class="n">pval_threshold</span><span class="o">=.</span><span class="mi">001</span><span class="p">):</span>
+<div class="viewcode-block" id="correlate_factors_and_features"><a class="viewcode-back" href="../../utils.html#maui.utils.correlate_factors_and_features">[docs]</a><span class="k">def</span> <span class="nf">correlate_factors_and_features</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">concatenated_data</span><span class="p">,</span> <span class="n">pval_threshold</span><span class="o">=</span><span class="mf">0.001</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Compute pearson correlation of latent factors with input features.</span>
 
 <span class="sd">    Parameters</span>
@@ -175,18 +191,23 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">feature_scores</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
-        <span class="n">corrs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="n">stats</span><span class="o">.</span><span class="n">pearsonr</span><span class="p">(</span><span class="n">concatenated_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">z</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span><span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">concatenated_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])],</span>
-                            <span class="n">index</span><span class="o">=</span><span class="n">concatenated_data</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s1">&#39;pval&#39;</span><span class="p">])</span>
-        <span class="n">corrs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">corrs</span><span class="o">.</span><span class="n">pval</span><span class="o">&gt;</span><span class="n">pval_threshold</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">corrs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">stats</span><span class="o">.</span><span class="n">pearsonr</span><span class="p">(</span><span class="n">concatenated_data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">z</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">j</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">concatenated_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="p">],</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">concatenated_data</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;pval&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">corrs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">corrs</span><span class="o">.</span><span class="n">pval</span> <span class="o">&gt;</span> <span class="n">pval_threshold</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">feature_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corrs</span><span class="o">.</span><span class="n">r</span><span class="p">)</span>
 
     <span class="n">feature_s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">feature_scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">feature_s</span><span class="o">.</span><span class="n">columns</span><span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+    <span class="n">feature_s</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
     <span class="k">return</span> <span class="n">feature_s</span></div>
 
 
-
-<div class="viewcode-block" id="compute_roc"><a class="viewcode-back" href="../../utils.html#maui.utils.compute_roc">[docs]</a><span class="k">def</span> <span class="nf">compute_roc</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">classifier</span><span class="o">=</span><span class="n">LinearSVC</span><span class="p">(</span><span class="n">C</span><span class="o">=.</span><span class="mi">001</span><span class="p">),</span> <span class="n">cv_folds</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+<div class="viewcode-block" id="compute_roc"><a class="viewcode-back" href="../../utils.html#maui.utils.compute_roc">[docs]</a><span class="k">def</span> <span class="nf">compute_roc</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">classifier</span><span class="o">=</span><span class="n">LinearSVC</span><span class="p">(</span><span class="n">C</span><span class="o">=</span><span class="mf">0.001</span><span class="p">),</span> <span class="n">cv_folds</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Compute the ROC (false positive rate, true positive rate) using cross-validation.</span>
 
 <span class="sd">    Parameters</span>
@@ -204,18 +225,21 @@
     <span class="n">class_names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
     <span class="n">z_to_use</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
     <span class="n">y_true_bin</span> <span class="o">=</span> <span class="n">label_binarize</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="n">class_names</span><span class="p">)</span>
-    <span class="n">y_proba</span> <span class="o">=</span> <span class="n">cross_val_predict</span><span class="p">(</span><span class="n">classifier</span><span class="p">,</span> <span class="n">z_to_use</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">cv_folds</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;decision_function&#39;</span><span class="p">)</span>
+    <span class="n">y_proba</span> <span class="o">=</span> <span class="n">cross_val_predict</span><span class="p">(</span>
+        <span class="n">classifier</span><span class="p">,</span> <span class="n">z_to_use</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">cv_folds</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;decision_function&quot;</span>
+    <span class="p">)</span>
 
     <span class="c1"># Compute ROC curve and ROC area for each class</span>
     <span class="n">roc_curves</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cl_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">class_names</span><span class="p">):</span>
         <span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">,</span> <span class="n">thresholds</span> <span class="o">=</span> <span class="n">roc_curve</span><span class="p">(</span><span class="n">y_true_bin</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">y_proba</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
-        <span class="n">roc_curves</span><span class="p">[</span><span class="n">cl_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span>
-            <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">fpr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;FPR&#39;</span><span class="p">),</span>
-            <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">tpr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;TPR&#39;</span><span class="p">),</span>
-        <span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">roc_curves</span><span class="p">[</span><span class="n">cl_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">fpr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;FPR&quot;</span><span class="p">),</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">tpr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;TPR&quot;</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>
 
-    <span class="n">mean_fpr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">roc_curves</span><span class="p">[</span><span class="n">cl_name</span><span class="p">]</span><span class="o">.</span><span class="n">FPR</span> <span class="k">for</span> <span class="n">cl_name</span> <span class="ow">in</span> <span class="n">class_names</span><span class="p">]))</span>
+    <span class="n">mean_fpr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">roc_curves</span><span class="p">[</span><span class="n">cl_name</span><span class="p">]</span><span class="o">.</span><span class="n">FPR</span> <span class="k">for</span> <span class="n">cl_name</span> <span class="ow">in</span> <span class="n">class_names</span><span class="p">])</span>
+    <span class="p">)</span>
 
     <span class="c1"># Then interpolate all ROC curves at this points</span>
     <span class="n">mean_tpr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">mean_fpr</span><span class="p">)</span>
@@ -225,14 +249,15 @@
     <span class="c1"># Finally average it</span>
     <span class="n">mean_tpr</span> <span class="o">/=</span> <span class="nb">len</span><span class="p">(</span><span class="n">class_names</span><span class="p">)</span>
 
-    <span class="n">roc_curves</span><span class="p">[</span><span class="s2">&quot;mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span>
-        <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">mean_fpr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;FPR&#39;</span><span class="p">),</span>
-        <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">mean_tpr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;TPR&#39;</span><span class="p">),</span>
-    <span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">roc_curves</span><span class="p">[</span><span class="s2">&quot;mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">mean_fpr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;FPR&quot;</span><span class="p">),</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">mean_tpr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;TPR&quot;</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">roc_curves</span></div>
 
-<div class="viewcode-block" id="estimate_kaplan_meier"><a class="viewcode-back" href="../../utils.html#maui.utils.estimate_kaplan_meier">[docs]</a><span class="k">def</span> <span class="nf">estimate_kaplan_meier</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span>
-    <span class="n">duration_column</span><span class="o">=</span><span class="s1">&#39;duration&#39;</span><span class="p">,</span> <span class="n">observed_column</span><span class="o">=</span><span class="s1">&#39;observed&#39;</span><span class="p">):</span>
+
+<div class="viewcode-block" id="estimate_kaplan_meier"><a class="viewcode-back" href="../../utils.html#maui.utils.estimate_kaplan_meier">[docs]</a><span class="k">def</span> <span class="nf">estimate_kaplan_meier</span><span class="p">(</span>
+    <span class="n">y</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span> <span class="n">duration_column</span><span class="o">=</span><span class="s2">&quot;duration&quot;</span><span class="p">,</span> <span class="n">observed_column</span><span class="o">=</span><span class="s2">&quot;observed&quot;</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Estimate survival curves for groups defined in y based on survival data in ``survival``</span>
 
 <span class="sd">    Parameters</span>
@@ -257,18 +282,25 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">import</span> <span class="nn">lifelines</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.&quot;</span>
+        <span class="p">)</span>
     <span class="n">kmf</span> <span class="o">=</span> <span class="n">lifelines</span><span class="o">.</span><span class="n">KaplanMeierFitter</span><span class="p">()</span>
     <span class="n">sfs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">cl</span> <span class="ow">in</span> <span class="n">y</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
-        <span class="n">ixs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">y</span><span class="o">==</span><span class="n">cl</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">survival</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
-        <span class="n">kmf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">survival</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ixs</span><span class="p">][</span><span class="n">duration_column</span><span class="p">],</span>
-            <span class="n">survival</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ixs</span><span class="p">][</span><span class="n">observed_column</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">cl</span><span class="p">)</span>
+        <span class="n">ixs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">y</span> <span class="o">==</span> <span class="n">cl</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">survival</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+        <span class="n">kmf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+            <span class="n">survival</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ixs</span><span class="p">][</span><span class="n">duration_column</span><span class="p">],</span>
+            <span class="n">survival</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ixs</span><span class="p">][</span><span class="n">observed_column</span><span class="p">],</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">cl</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">sfs</span><span class="p">[</span><span class="n">cl</span><span class="p">]</span> <span class="o">=</span> <span class="n">kmf</span><span class="o">.</span><span class="n">survival_function_</span>
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">sfs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">unique</span><span class="p">())],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">interpolate</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="multivariate_logrank_test"><a class="viewcode-back" href="../../utils.html#maui.utils.multivariate_logrank_test">[docs]</a><span class="k">def</span> <span class="nf">multivariate_logrank_test</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span>
-    <span class="n">duration_column</span><span class="o">=</span><span class="s1">&#39;duration&#39;</span><span class="p">,</span> <span class="n">observed_column</span><span class="o">=</span><span class="s1">&#39;observed&#39;</span><span class="p">):</span>
+
+<div class="viewcode-block" id="multivariate_logrank_test"><a class="viewcode-back" href="../../utils.html#maui.utils.multivariate_logrank_test">[docs]</a><span class="k">def</span> <span class="nf">multivariate_logrank_test</span><span class="p">(</span>
+    <span class="n">y</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span> <span class="n">duration_column</span><span class="o">=</span><span class="s2">&quot;duration&quot;</span><span class="p">,</span> <span class="n">observed_column</span><span class="o">=</span><span class="s2">&quot;observed&quot;</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Compute the multivariate log-rank test for differential survival</span>
 <span class="sd">    among the groups defined by ``y`` in the survival data in ``survival``,</span>
 <span class="sd">    under the null-hypothesis that all groups have the same survival function</span>
@@ -295,16 +327,26 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">import</span> <span class="nn">lifelines</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.&quot;</span>
+        <span class="p">)</span>
     <span class="n">ixs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">survival</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
-    <span class="n">mlr</span> <span class="o">=</span> <span class="n">lifelines</span><span class="o">.</span><span class="n">statistics</span><span class="o">.</span><span class="n">multivariate_logrank_test</span><span class="p">(</span><span class="n">survival</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ixs</span><span class="p">][</span><span class="n">duration_column</span><span class="p">],</span>
-                                                         <span class="n">y</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ixs</span><span class="p">],</span>
-                                                         <span class="n">survival</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ixs</span><span class="p">][</span><span class="n">observed_column</span><span class="p">])</span>
+    <span class="n">mlr</span> <span class="o">=</span> <span class="n">lifelines</span><span class="o">.</span><span class="n">statistics</span><span class="o">.</span><span class="n">multivariate_logrank_test</span><span class="p">(</span>
+        <span class="n">survival</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ixs</span><span class="p">][</span><span class="n">duration_column</span><span class="p">],</span>
+        <span class="n">y</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ixs</span><span class="p">],</span>
+        <span class="n">survival</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ixs</span><span class="p">][</span><span class="n">observed_column</span><span class="p">],</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">mlr</span><span class="o">.</span><span class="n">test_statistic</span><span class="p">,</span> <span class="n">mlr</span><span class="o">.</span><span class="n">p_value</span></div>
 
-<div class="viewcode-block" id="select_clinical_factors"><a class="viewcode-back" href="../../filtering-and-merging-latent-factors.html#maui.utils.select_clinical_factors">[docs]</a><span class="k">def</span> <span class="nf">select_clinical_factors</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span>
-    <span class="n">duration_column</span><span class="o">=</span><span class="s1">&#39;duration&#39;</span><span class="p">,</span> <span class="n">observed_column</span><span class="o">=</span><span class="s1">&#39;observed&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">05</span><span class="p">,</span>
-    <span class="n">cox_penalizer</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+
+<div class="viewcode-block" id="select_clinical_factors"><a class="viewcode-back" href="../../saving-and-loading-models.html#maui.utils.select_clinical_factors">[docs]</a><span class="k">def</span> <span class="nf">select_clinical_factors</span><span class="p">(</span>
+    <span class="n">z</span><span class="p">,</span>
+    <span class="n">survival</span><span class="p">,</span>
+    <span class="n">duration_column</span><span class="o">=</span><span class="s2">&quot;duration&quot;</span><span class="p">,</span>
+    <span class="n">observed_column</span><span class="o">=</span><span class="s2">&quot;observed&quot;</span><span class="p">,</span>
+    <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+    <span class="n">cox_penalizer</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Select latent factors which are predictive of survival. This is</span>
 <span class="sd">    accomplished by fitting a Cox Proportional Hazards (CPH) model to each</span>
 <span class="sd">    latent factor, while controlling for known covariates, and only keeping</span>
@@ -329,10 +371,12 @@
 <span class="sd">                determined to have clinical value (are individually predictive</span>
 <span class="sd">                of survival, controlling for covariates)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">cox_coefficients</span> <span class="o">=</span> <span class="n">_cph_coefs</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span>
-        <span class="n">duration_column</span><span class="p">,</span> <span class="n">observed_column</span><span class="p">,</span> <span class="n">penalizer</span><span class="o">=</span><span class="n">cox_penalizer</span><span class="p">)</span>
-    <span class="n">signif_cox_coefs</span> <span class="o">=</span> <span class="n">cox_coefficients</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">cox_coefficients</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">p</span><span class="o">&lt;</span><span class="n">alpha</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">z</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">signif_cox_coefs</span><span class="o">.</span><span class="n">index</span><span class="p">]</span></div>
+    <span class="n">cox_coefficients</span> <span class="o">=</span> <span class="n">_cph_coefs</span><span class="p">(</span>
+        <span class="n">z</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span> <span class="n">duration_column</span><span class="p">,</span> <span class="n">observed_column</span><span class="p">,</span> <span class="n">penalizer</span><span class="o">=</span><span class="n">cox_penalizer</span>
+    <span class="p">)</span>
+    <span class="n">signif_cox_coefs</span> <span class="o">=</span> <span class="n">cox_coefficients</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">cox_coefficients</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">p</span> <span class="o">&lt;</span> <span class="n">alpha</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">z</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">signif_cox_coefs</span><span class="o">.</span><span class="n">index</span><span class="p">]</span></div>
+
 
 <span class="k">def</span> <span class="nf">_cph_coefs</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span> <span class="n">duration_column</span><span class="p">,</span> <span class="n">observed_column</span><span class="p">,</span> <span class="n">penalizer</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Compute one CPH model for each latent factor (column) in z.</span>
@@ -341,15 +385,33 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">import</span> <span class="nn">lifelines</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span>
-        <span class="n">lifelines</span><span class="o">.</span><span class="n">CoxPHFitter</span><span class="p">(</span><span class="n">penalizer</span><span class="o">=</span><span class="n">penalizer</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">survival</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">LF</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">i</span><span class="p">])</span><span class="o">.</span><span class="n">dropna</span><span class="p">(),</span>
-            <span class="n">duration_column</span><span class="p">,</span> <span class="n">observed_column</span><span class="p">)</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s1">&#39;LF&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">z</span><span class="o">.</span><span class="n">columns</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">lifelines</span><span class="o">.</span><span class="n">CoxPHFitter</span><span class="p">(</span><span class="n">penalizer</span><span class="o">=</span><span class="n">penalizer</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+                <span class="n">survival</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">LF</span><span class="o">=</span><span class="n">z</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span><span class="o">.</span><span class="n">dropna</span><span class="p">(),</span>
+                <span class="n">duration_column</span><span class="p">,</span>
+                <span class="n">observed_column</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">&quot;LF&quot;</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">z</span><span class="o">.</span><span class="n">columns</span>
+        <span class="p">],</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
 
-<div class="viewcode-block" id="compute_harrells_c"><a class="viewcode-back" href="../../utils.html#maui.utils.compute_harrells_c">[docs]</a><span class="k">def</span> <span class="nf">compute_harrells_c</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span> <span class="n">duration_column</span><span class="o">=</span><span class="s1">&#39;duration&#39;</span><span class="p">,</span>
-    <span class="n">observed_column</span><span class="o">=</span><span class="s1">&#39;observed&#39;</span><span class="p">,</span> <span class="n">cox_penalties</span><span class="o">=</span><span class="p">[</span><span class="o">.</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">1000</span><span class="p">,</span><span class="mi">10000</span><span class="p">],</span>
-    <span class="n">cv_folds</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+
+<div class="viewcode-block" id="compute_harrells_c"><a class="viewcode-back" href="../../utils.html#maui.utils.compute_harrells_c">[docs]</a><span class="k">def</span> <span class="nf">compute_harrells_c</span><span class="p">(</span>
+    <span class="n">z</span><span class="p">,</span>
+    <span class="n">survival</span><span class="p">,</span>
+    <span class="n">duration_column</span><span class="o">=</span><span class="s2">&quot;duration&quot;</span><span class="p">,</span>
+    <span class="n">observed_column</span><span class="o">=</span><span class="s2">&quot;observed&quot;</span><span class="p">,</span>
+    <span class="n">cox_penalties</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">],</span>
+    <span class="n">cv_folds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Compute&#39;s Harrell&#39;s c-Index for a Cox Proportional Hazards regression modeling</span>
 <span class="sd">    survival by the latent factors in z.</span>
 
@@ -373,31 +435,39 @@
 <span class="sd">        one value per cv_fold</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">cvcs</span> <span class="o">=</span> <span class="p">[</span><span class="n">_cv_coxph_c</span><span class="p">(</span>
-        <span class="n">z</span><span class="p">,</span>
-        <span class="n">survival</span><span class="p">,</span>
-        <span class="n">p</span><span class="p">,</span>
-        <span class="n">duration_column</span><span class="p">,</span>
-        <span class="n">observed_column</span><span class="p">,</span>
-        <span class="n">cv_folds</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">cox_penalties</span><span class="p">]</span>
+    <span class="n">cvcs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">_cv_coxph_c</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">duration_column</span><span class="p">,</span> <span class="n">observed_column</span><span class="p">,</span> <span class="n">cv_folds</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">cox_penalties</span>
+    <span class="p">]</span>
     <span class="k">return</span> <span class="n">cvcs</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">cvcs</span><span class="p">])]</span></div>
 
-<span class="k">def</span> <span class="nf">_cv_coxph_c</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span> <span class="n">penalty</span><span class="p">,</span>
-    <span class="n">duration_column</span><span class="o">=</span><span class="s1">&#39;duration&#39;</span><span class="p">,</span> <span class="n">observed_column</span><span class="o">=</span><span class="s1">&#39;observed&#39;</span><span class="p">,</span> <span class="n">cv_folds</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+
+<span class="k">def</span> <span class="nf">_cv_coxph_c</span><span class="p">(</span>
+    <span class="n">z</span><span class="p">,</span>
+    <span class="n">survival</span><span class="p">,</span>
+    <span class="n">penalty</span><span class="p">,</span>
+    <span class="n">duration_column</span><span class="o">=</span><span class="s2">&quot;duration&quot;</span><span class="p">,</span>
+    <span class="n">observed_column</span><span class="o">=</span><span class="s2">&quot;observed&quot;</span><span class="p">,</span>
+    <span class="n">cv_folds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+<span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">import</span> <span class="nn">lifelines</span>
         <span class="kn">import</span> <span class="nn">lifelines.utils</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+            <span class="s2">&quot;The module ``lifelines`` was not found. It is required for this functionality. You may install it using `pip install lifelines`.&quot;</span>
+        <span class="p">)</span>
 
     <span class="n">cph</span> <span class="o">=</span> <span class="n">lifelines</span><span class="o">.</span><span class="n">CoxPHFitter</span><span class="p">(</span><span class="n">penalizer</span><span class="o">=</span><span class="n">penalty</span><span class="p">)</span>
     <span class="n">survdf</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">survival</span><span class="p">,</span> <span class="n">z</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
 
-    <span class="n">scores</span> <span class="o">=</span> <span class="n">lifelines</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">k_fold_cross_validation</span><span class="p">(</span><span class="n">cph</span><span class="p">,</span>
-        <span class="n">survdf</span><span class="p">,</span> <span class="n">duration_column</span><span class="p">,</span> <span class="n">event_col</span><span class="o">=</span><span class="n">observed_column</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">cv_folds</span><span class="p">)</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">lifelines</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">k_fold_cross_validation</span><span class="p">(</span>
+        <span class="n">cph</span><span class="p">,</span> <span class="n">survdf</span><span class="p">,</span> <span class="n">duration_column</span><span class="p">,</span> <span class="n">event_col</span><span class="o">=</span><span class="n">observed_column</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">cv_folds</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">scores</span>
 
-<div class="viewcode-block" id="scale"><a class="viewcode-back" href="../../filtering-and-merging-latent-factors.html#maui.utils.scale">[docs]</a><span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+
+<div class="viewcode-block" id="scale"><a class="viewcode-back" href="../../utils.html#maui.utils.scale">[docs]</a><span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Scale and center data</span>
 
 <span class="sd">    Parameters</span>
@@ -409,9 +479,7 @@
 <span class="sd">    scaled: pd.DataFrame (n_features, n_samples) scaled data</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">df_scaled</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">df_scaled</span><span class="p">,</span>
-        <span class="n">columns</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
-        <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="o">.</span><span class="n">T</span></div>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">df_scaled</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="o">.</span><span class="n">T</span></div>
 </pre></div>
 
           </div>
@@ -437,6 +505,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../autoencoder-integration.html">Multi-modal Autoencoders</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../data-normalization.html">Data and Normalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../filtering-and-merging-latent-factors.html">Filtering and Merging latent factors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../saving-and-loading-models.html">Saving and loading models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../maui.html">The Maui Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../utils.html">Maui Utilities</a></li>
 </ul>

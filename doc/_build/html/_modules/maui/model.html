@@ -38,10 +38,10 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">spatial</span><span class="p">,</span><span class="n">cluster</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">spatial</span><span class="p">,</span> <span class="n">cluster</span>
 <span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="k">import</span> <span class="n">KMeans</span>
 <span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="k">import</span> <span class="n">BaseEstimator</span>
-<span class="kn">from</span> <span class="nn">.autoencoders_architectures</span> <span class="k">import</span> <span class="n">stacked_vae</span><span class="p">,</span> <span class="n">deep_vae</span>
+<span class="kn">from</span> <span class="nn">.autoencoders_architectures</span> <span class="k">import</span> <span class="n">stacked_vae</span><span class="p">,</span> <span class="n">deep_vae</span><span class="p">,</span> <span class="n">train_model</span>
 
 
 <div class="viewcode-block" id="Maui"><a class="viewcode-back" href="../../maui.html#maui.Maui">[docs]</a><span class="k">class</span> <span class="nc">Maui</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">):</span>
@@ -72,18 +72,79 @@
 <span class="sd">        (latent) layer is variational.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_hidden</span><span class="o">=</span><span class="p">[</span><span class="mi">1500</span><span class="p">],</span> <span class="n">n_latent</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-        <span class="n">epochs</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">architecture</span><span class="o">=</span><span class="s1">&#39;stacked&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n_hidden</span><span class="o">=</span><span class="p">[</span><span class="mi">1500</span><span class="p">],</span>
+        <span class="n">n_latent</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="n">epochs</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+        <span class="n">architecture</span><span class="o">=</span><span class="s2">&quot;stacked&quot;</span><span class="p">,</span>
+        <span class="n">initial_beta_val</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">kappa</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">max_beta_val</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.0005</span><span class="p">,</span>
+        <span class="n">epsilon_std</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">batch_normalize_inputs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">batch_normalize_intermediaries</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">batch_normalize_embedding</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">relu_intermediaries</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">relu_embedding</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">input_dim</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_args</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">&quot;self&quot;</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span> <span class="o">=</span> <span class="n">n_hidden</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_latent</span> <span class="o">=</span> <span class="n">n_latent</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span> <span class="o">=</span> <span class="n">epochs</span>
-        <span class="k">if</span> <span class="n">architecture</span> <span class="o">==</span> <span class="s1">&#39;stacked&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">architecture</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">stacked_vae</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">architecture</span> <span class="o">==</span> <span class="s1">&#39;deep&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">architecture</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">deep_vae</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">architecture</span> <span class="o">==</span> <span class="s2">&quot;stacked&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">architecture</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+                <span class="n">stacked_vae</span><span class="p">,</span>
+                <span class="n">initial_beta_val</span><span class="o">=</span><span class="n">initial_beta_val</span><span class="p">,</span>
+                <span class="n">kappa</span><span class="o">=</span><span class="n">kappa</span><span class="p">,</span>
+                <span class="n">max_beta_val</span><span class="o">=</span><span class="n">max_beta_val</span><span class="p">,</span>
+                <span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">,</span>
+                <span class="n">epsilon_std</span><span class="o">=</span><span class="n">epsilon_std</span><span class="p">,</span>
+                <span class="n">batch_normalize_inputs</span><span class="o">=</span><span class="n">batch_normalize_inputs</span><span class="p">,</span>
+                <span class="n">batch_normalize_intermediaries</span><span class="o">=</span><span class="n">batch_normalize_intermediaries</span><span class="p">,</span>
+                <span class="n">relu_intermediaries</span><span class="o">=</span><span class="n">relu_intermediaries</span><span class="p">,</span>
+                <span class="n">relu_embedding</span><span class="o">=</span><span class="n">relu_embedding</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">architecture</span> <span class="o">==</span> <span class="s2">&quot;deep&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">architecture</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+                <span class="n">deep_vae</span><span class="p">,</span>
+                <span class="n">initial_beta_val</span><span class="o">=</span><span class="n">initial_beta_val</span><span class="p">,</span>
+                <span class="n">kappa</span><span class="o">=</span><span class="n">kappa</span><span class="p">,</span>
+                <span class="n">max_beta_val</span><span class="o">=</span><span class="n">max_beta_val</span><span class="p">,</span>
+                <span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">,</span>
+                <span class="n">epsilon_std</span><span class="o">=</span><span class="n">epsilon_std</span><span class="p">,</span>
+                <span class="n">batch_normalize_inputs</span><span class="o">=</span><span class="n">batch_normalize_inputs</span><span class="p">,</span>
+                <span class="n">relu_embedding</span><span class="o">=</span><span class="n">relu_embedding</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;architecture must be one of &#39;stacked&#39; or &#39;deep&#39;&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">input_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vae</span><span class="p">,</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">sampling_encoder</span><span class="p">,</span> <span class="n">decoder</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">architecture</span><span class="p">(</span>
+                <span class="n">input_dim</span><span class="p">,</span>
+                <span class="n">hidden_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span><span class="p">,</span>
+                <span class="n">latent_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_latent</span><span class="p">,</span>
+                <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+                <span class="n">epochs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">beta</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vae</span> <span class="o">=</span> <span class="n">vae</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">encoder</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sampling_encoder</span> <span class="o">=</span> <span class="n">sampling_encoder</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span> <span class="o">=</span> <span class="n">decoder</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+            <span class="n">train_model</span><span class="p">,</span>
+            <span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span>
+            <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+            <span class="n">kappa</span><span class="o">=</span><span class="n">kappa</span><span class="p">,</span>
+            <span class="n">max_beta_val</span><span class="o">=</span><span class="n">max_beta_val</span><span class="p">,</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="Maui.fit"><a class="viewcode-back" href="../../maui.html#maui.Maui.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">X_validation</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Train autoencoder model</span>
@@ -104,10 +165,18 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">x_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2array</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">x_test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2array</span><span class="p">(</span><span class="n">X_validation</span><span class="p">)</span> <span class="k">if</span> <span class="n">X_validation</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_</span>
-        <span class="n">hist</span><span class="p">,</span> <span class="n">vae</span><span class="p">,</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">sampling_encoder</span><span class="p">,</span> <span class="n">decoder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">architecture</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="p">,</span> <span class="n">x_test</span><span class="p">,</span>
-            <span class="n">hidden_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span><span class="p">,</span> <span class="n">latent_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_latent</span><span class="p">,</span>
-            <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;vae&quot;</span><span class="p">):</span>
+            <span class="n">vae</span><span class="p">,</span> <span class="n">encoder</span><span class="p">,</span> <span class="n">sampling_encoder</span><span class="p">,</span> <span class="n">decoder</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">architecture</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">hidden_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span><span class="p">,</span>
+                <span class="n">latent_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_latent</span><span class="p">,</span>
+                <span class="n">batch_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+                <span class="n">epochs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_args</span><span class="p">[</span><span class="s2">&quot;input_dim&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">hist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">training_fn</span><span class="p">(</span><span class="n">vae</span><span class="o">=</span><span class="n">vae</span><span class="p">,</span> <span class="n">x_train</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="p">,</span> <span class="n">x_val</span><span class="o">=</span><span class="n">x_test</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">beta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">beta</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">hist</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">history</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">vae</span> <span class="o">=</span> <span class="n">vae</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">encoder</span>
@@ -115,7 +184,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span> <span class="o">=</span> <span class="n">decoder</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="Maui.transform"><a class="viewcode-back" href="../../maui.html#maui.Maui.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">encoder</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="Maui.transform"><a class="viewcode-back" href="../../maui.html#maui.Maui.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">encoder</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Transform X into the latent space that was previously learned using</span>
 <span class="sd">        `fit` or `fit_transform`, and return the latent factor representation.</span>
 
@@ -135,22 +204,26 @@
 <span class="sd">        z:  DataFrame (n_samples, n_latent_factors)</span>
 <span class="sd">            Latent factors representation of the data X.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">encoder</span> <span class="o">==</span> <span class="s1">&#39;mean&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">encoder</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
             <span class="n">the_encoder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span>
-        <span class="k">elif</span> <span class="n">encoder</span> <span class="o">==</span> <span class="s1">&#39;sample&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">encoder</span> <span class="o">==</span> <span class="s2">&quot;sample&quot;</span><span class="p">:</span>
             <span class="n">the_encoder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_encoder</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`encoder` must be one of &#39;mean&#39; or &#39;sample&#39;&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">x_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2array</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">z_</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">the_encoder</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="p">),</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">z_</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="n">the_encoder</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="p">),</span>
             <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
-            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">f</span><span class="s1">&#39;LF</span><span class="si">{i}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">n_latent</span><span class="o">+</span><span class="mi">1</span><span class="p">)])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">feature_correlations</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">correlate_factors_and_features</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="p">)</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">f</span><span class="s2">&quot;LF</span><span class="si">{i}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_latent</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)],</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_correlations</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">correlate_factors_and_features</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">w_</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span></div>
 
-<div class="viewcode-block" id="Maui.fit_transform"><a class="viewcode-back" href="../../maui.html#maui.Maui.fit_transform">[docs]</a>    <span class="k">def</span> <span class="nf">fit_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">X_validation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">encoder</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="Maui.fit_transform"><a class="viewcode-back" href="../../maui.html#maui.Maui.fit_transform">[docs]</a>    <span class="k">def</span> <span class="nf">fit_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">X_validation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">encoder</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Train autoencoder model, and return the latent factor representation</span>
 <span class="sd">        of the data X.</span>
 
@@ -172,9 +245,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">X_validation</span><span class="o">=</span><span class="n">X_validation</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">encoder</span><span class="o">=</span><span class="n">encoder</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Maui.cluster"><a class="viewcode-back" href="../../maui.html#maui.Maui.cluster">[docs]</a>    <span class="k">def</span> <span class="nf">cluster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">optimal_k_method</span><span class="o">=</span><span class="s1">&#39;ami&#39;</span><span class="p">,</span>
-        <span class="n">optimal_k_range</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">ami_y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">kmeans_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;n_init&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span> <span class="s1">&#39;n_jobs&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}):</span>
+<div class="viewcode-block" id="Maui.cluster"><a class="viewcode-back" href="../../maui.html#maui.Maui.cluster">[docs]</a>    <span class="k">def</span> <span class="nf">cluster</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">k</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">optimal_k_method</span><span class="o">=</span><span class="s2">&quot;ami&quot;</span><span class="p">,</span>
+        <span class="n">optimal_k_range</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+        <span class="n">ami_y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">kmeans_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;n_init&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span> <span class="s2">&quot;n_jobs&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+    <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Cluster the samples using k-means based on the latent factors.</span>
 
 <span class="sd">        Parameters</span>
@@ -198,29 +276,48 @@
 <span class="sd">        yhat:   Series (n_samples) cluster labels for each sample</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">KMeans</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kmeans_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+                <span class="n">KMeans</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kmeans_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="o">.</span><span class="n">index</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">optimal_k_method</span> <span class="o">==</span> <span class="s1">&#39;ami&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">optimal_k_method</span> <span class="o">==</span> <span class="s2">&quot;ami&quot;</span><span class="p">:</span>
                 <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="k">import</span> <span class="n">adjusted_mutual_info_score</span>
+
                 <span class="k">if</span> <span class="n">ami_y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Must provide ``ami_y`` if using &#39;ami&#39; to select optimal K.&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                        <span class="s2">&quot;Must provide ``ami_y`` if using &#39;ami&#39; to select optimal K.&quot;</span>
+                    <span class="p">)</span>
                 <span class="n">z_to_use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ami_y</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
                 <span class="n">scorer</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">yhat</span><span class="p">:</span> <span class="n">adjusted_mutual_info_score</span><span class="p">(</span><span class="n">ami_y</span><span class="p">,</span> <span class="n">yhat</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">optimal_k_method</span> <span class="o">==</span> <span class="s1">&#39;silhouette&#39;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">optimal_k_method</span> <span class="o">==</span> <span class="s2">&quot;silhouette&quot;</span><span class="p">:</span>
                 <span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="k">import</span> <span class="n">silhouette_score</span>
+
                 <span class="n">z_to_use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span>
                 <span class="n">scorer</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">yhat</span><span class="p">:</span> <span class="n">silhouette_score</span><span class="p">(</span><span class="n">z_to_use</span><span class="p">,</span> <span class="n">yhat</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">z_to_use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span>
                 <span class="n">scorer</span> <span class="o">=</span> <span class="n">optimal_k_method</span>
-            <span class="n">yhats</span> <span class="o">=</span> <span class="p">{</span> <span class="n">k</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">KMeans</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kmeans_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">z_to_use</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">z_to_use</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">optimal_k_range</span> <span class="p">}</span>
-            <span class="n">score_name</span> <span class="o">=</span> <span class="n">optimal_k_method</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optimal_k_method</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">optimal_k_method</span><span class="o">.</span><span class="vm">__name__</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">kmeans_scores</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="n">scorer</span><span class="p">(</span><span class="n">yhats</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">optimal_k_range</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="n">optimal_k_range</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">score_name</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">kmeans_scores</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;K&#39;</span>
+            <span class="n">yhats</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">k</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+                    <span class="n">KMeans</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="o">**</span><span class="n">kmeans_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">fit_predict</span><span class="p">(</span><span class="n">z_to_use</span><span class="p">),</span>
+                    <span class="n">index</span><span class="o">=</span><span class="n">z_to_use</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">optimal_k_range</span>
+            <span class="p">}</span>
+            <span class="n">score_name</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">optimal_k_method</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optimal_k_method</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+                <span class="k">else</span> <span class="n">optimal_k_method</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kmeans_scores</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">scorer</span><span class="p">(</span><span class="n">yhats</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">optimal_k_range</span><span class="p">],</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">optimal_k_range</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">score_name</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kmeans_scores</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;K&quot;</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">optimal_k_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kmeans_scores</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">yhat_</span> <span class="o">=</span> <span class="n">yhats</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">optimal_k_</span><span class="p">]</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">yhat_</span></div>
-
 
 <div class="viewcode-block" id="Maui.compute_roc"><a class="viewcode-back" href="../../maui.html#maui.Maui.compute_roc">[docs]</a>    <span class="k">def</span> <span class="nf">compute_roc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Compute Receiver Operating Characteristics curve for SVM prediction</span>
@@ -258,15 +355,20 @@
 <span class="sd">        aucs:   pd.Series, auc per class as well as mean</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compute_roc</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">aucs_</span> <span class="o">=</span> <span class="p">{</span> <span class="n">k</span><span class="p">:</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">auc</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">roc_curves_</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">FPR</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">roc_curves_</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">TPR</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roc_curves_</span> <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aucs_</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">auc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roc_curves_</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">FPR</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">roc_curves_</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">TPR</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roc_curves_</span>
+        <span class="p">}</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">aucs_</span></div>
 
-
-<div class="viewcode-block" id="Maui.select_clinical_factors"><a class="viewcode-back" href="../../maui.html#maui.Maui.select_clinical_factors">[docs]</a>    <span class="k">def</span> <span class="nf">select_clinical_factors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span>
-        <span class="n">duration_column</span><span class="o">=</span><span class="s1">&#39;duration&#39;</span><span class="p">,</span> <span class="n">observed_column</span><span class="o">=</span><span class="s1">&#39;observed&#39;</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=.</span><span class="mi">05</span><span class="p">,</span> <span class="n">cox_penalizer</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="viewcode-block" id="Maui.select_clinical_factors"><a class="viewcode-back" href="../../maui.html#maui.Maui.select_clinical_factors">[docs]</a>    <span class="k">def</span> <span class="nf">select_clinical_factors</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">survival</span><span class="p">,</span>
+        <span class="n">duration_column</span><span class="o">=</span><span class="s2">&quot;duration&quot;</span><span class="p">,</span>
+        <span class="n">observed_column</span><span class="o">=</span><span class="s2">&quot;observed&quot;</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">cox_penalizer</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Select latent factors which are predictive of survival. This is</span>
 <span class="sd">        accomplished by fitting a Cox Proportional Hazards (CPH) model to each</span>
 <span class="sd">        latent factor, while controlling for known covariates, and only keeping</span>
@@ -291,15 +393,27 @@
 <span class="sd">                    determined to have clinical value (are individually predictive</span>
 <span class="sd">                    of survival, controlling for covariates)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">z_clinical_</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">select_clinical_factors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span>
-            <span class="n">duration_column</span><span class="o">=</span><span class="n">duration_column</span><span class="p">,</span> <span class="n">observed_column</span><span class="o">=</span><span class="n">observed_column</span><span class="p">,</span>
-            <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span> <span class="n">cox_penalizer</span><span class="o">=</span><span class="n">cox_penalizer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">z_clinical_</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">select_clinical_factors</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">,</span>
+            <span class="n">survival</span><span class="p">,</span>
+            <span class="n">duration_column</span><span class="o">=</span><span class="n">duration_column</span><span class="p">,</span>
+            <span class="n">observed_column</span><span class="o">=</span><span class="n">observed_column</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span>
+            <span class="n">cox_penalizer</span><span class="o">=</span><span class="n">cox_penalizer</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_clinical_</span></div>
 
-<div class="viewcode-block" id="Maui.c_index"><a class="viewcode-back" href="../../maui.html#maui.Maui.c_index">[docs]</a>    <span class="k">def</span> <span class="nf">c_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span> <span class="n">clinical_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">duration_column</span><span class="o">=</span><span class="s1">&#39;duration&#39;</span><span class="p">,</span> <span class="n">observed_column</span><span class="o">=</span><span class="s1">&#39;observed&#39;</span><span class="p">,</span>
-        <span class="n">cox_penalties</span><span class="o">=</span><span class="p">[</span><span class="o">.</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">100</span><span class="p">,</span><span class="mi">1000</span><span class="p">,</span><span class="mi">10000</span><span class="p">],</span>
-        <span class="n">cv_folds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sel_clin_alpha</span><span class="o">=.</span><span class="mi">05</span><span class="p">,</span> <span class="n">sel_clin_penalty</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="viewcode-block" id="Maui.c_index"><a class="viewcode-back" href="../../maui.html#maui.Maui.c_index">[docs]</a>    <span class="k">def</span> <span class="nf">c_index</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">survival</span><span class="p">,</span>
+        <span class="n">clinical_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">duration_column</span><span class="o">=</span><span class="s2">&quot;duration&quot;</span><span class="p">,</span>
+        <span class="n">observed_column</span><span class="o">=</span><span class="s2">&quot;observed&quot;</span><span class="p">,</span>
+        <span class="n">cox_penalties</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">],</span>
+        <span class="n">cv_folds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+        <span class="n">sel_clin_alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+        <span class="n">sel_clin_penalty</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Compute&#39;s Harrell&#39;s c-Index for a Cox Proportional Hazards regression modeling</span>
 <span class="sd">        survival by the latent factors in z.</span>
 
@@ -329,13 +443,18 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">clinical_only</span><span class="p">:</span>
-            <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_clinical_factors</span><span class="p">(</span><span class="n">survival</span><span class="p">,</span> <span class="n">duration_column</span><span class="p">,</span>
-                <span class="n">observed_column</span><span class="p">,</span> <span class="n">sel_clin_alpha</span><span class="p">,</span> <span class="n">sel_clin_penalty</span><span class="p">)</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_clinical_factors</span><span class="p">(</span>
+                <span class="n">survival</span><span class="p">,</span>
+                <span class="n">duration_column</span><span class="p">,</span>
+                <span class="n">observed_column</span><span class="p">,</span>
+                <span class="n">sel_clin_alpha</span><span class="p">,</span>
+                <span class="n">sel_clin_penalty</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span>
-        <span class="k">return</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">compute_harrells_c</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span>
-            <span class="n">duration_column</span><span class="p">,</span> <span class="n">observed_column</span><span class="p">,</span>
-            <span class="n">cox_penalties</span><span class="p">,</span> <span class="n">cv_folds</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">compute_harrells_c</span><span class="p">(</span>
+            <span class="n">z</span><span class="p">,</span> <span class="n">survival</span><span class="p">,</span> <span class="n">duration_column</span><span class="p">,</span> <span class="n">observed_column</span><span class="p">,</span> <span class="n">cox_penalties</span><span class="p">,</span> <span class="n">cv_folds</span>
+        <span class="p">)</span></div>
 
 <div class="viewcode-block" id="Maui.get_linear_weights"><a class="viewcode-back" href="../../maui.html#maui.Maui.get_linear_weights">[docs]</a>    <span class="k">def</span> <span class="nf">get_linear_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get linear model coefficients obtained from fitting linear models</span>
@@ -348,11 +467,13 @@
 <span class="sd">            w_{ij} is the coefficient associated with feature `i` in a linear model</span>
 <span class="sd">            predicting it from latent factor `j`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;w_&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">w_</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">map_factors_to_feaures_using_linear_models</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;w_&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">w_</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">map_factors_to_feaures_using_linear_models</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="o">.</span><span class="n">T</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_</span></div>
 
-<div class="viewcode-block" id="Maui.drop_unexplanatory_factors"><a class="viewcode-back" href="../../maui.html#maui.Maui.drop_unexplanatory_factors">[docs]</a>    <span class="k">def</span> <span class="nf">drop_unexplanatory_factors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=.</span><span class="mi">02</span><span class="p">):</span>
+<div class="viewcode-block" id="Maui.drop_unexplanatory_factors"><a class="viewcode-back" href="../../maui.html#maui.Maui.drop_unexplanatory_factors">[docs]</a>    <span class="k">def</span> <span class="nf">drop_unexplanatory_factors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.02</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Drops factors which have a low R^2 score in a univariate linear model</span>
 <span class="sd">        predicting the features `x` from a column of the latent factors `z`.</span>
 
@@ -368,14 +489,21 @@
 <span class="sd">                    above the threshold when using that column as an input</span>
 <span class="sd">                    to a linear model predicting `x`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;z_&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;z_&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Must first transform some data in order to drop columns.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">z_</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">filter_factors_by_r2</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">threshold</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span></div>
 
-<div class="viewcode-block" id="Maui.merge_similar_latent_factors"><a class="viewcode-back" href="../../maui.html#maui.Maui.merge_similar_latent_factors">[docs]</a>    <span class="k">def</span> <span class="nf">merge_similar_latent_factors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distance_in</span><span class="o">=</span><span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="n">distance_metric</span><span class="o">=</span><span class="s1">&#39;correlation&#39;</span><span class="p">,</span>
-        <span class="n">linkage_method</span><span class="o">=</span><span class="s1">&#39;complete&#39;</span><span class="p">,</span> <span class="n">distance_threshold</span><span class="o">=</span><span class="mf">0.17</span><span class="p">,</span> <span class="n">merge_fn</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span>
-        <span class="n">plot_dendrogram</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_dendro_ax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Maui.merge_similar_latent_factors"><a class="viewcode-back" href="../../maui.html#maui.Maui.merge_similar_latent_factors">[docs]</a>    <span class="k">def</span> <span class="nf">merge_similar_latent_factors</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">distance_in</span><span class="o">=</span><span class="s2">&quot;z&quot;</span><span class="p">,</span>
+        <span class="n">distance_metric</span><span class="o">=</span><span class="s2">&quot;correlation&quot;</span><span class="p">,</span>
+        <span class="n">linkage_method</span><span class="o">=</span><span class="s2">&quot;complete&quot;</span><span class="p">,</span>
+        <span class="n">distance_threshold</span><span class="o">=</span><span class="mf">0.17</span><span class="p">,</span>
+        <span class="n">merge_fn</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span>
+        <span class="n">plot_dendrogram</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">plot_dendro_ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Merge latent factorz in z whose distance is below a certain threshold.</span>
 <span class="sd">        Used to squeeze down latent factor representations if there are many co-linear</span>
 <span class="sd">        latent factors.</span>
@@ -403,24 +531,76 @@
 <span class="sd">        z:                  (n_samples, n_factors) pd.DataFrame of latent factors</span>
 <span class="sd">                            where some have been merged</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;z_&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Cannot merge latent factors before fitting/transforming some.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;z_&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="s2">&quot;Cannot merge latent factors before fitting/transforming some.&quot;</span>
+            <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">distance_in</span> <span class="o">==</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">z_</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">merge_factors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">distance_threshold</span><span class="p">,</span>
-                <span class="n">merge_fn</span><span class="o">=</span><span class="n">merge_fn</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">distance_metric</span><span class="p">,</span> <span class="n">linkage</span><span class="o">=</span><span class="n">linkage_method</span><span class="p">,</span>
-                <span class="n">plot_dendro</span><span class="o">=</span><span class="n">plot_dendrogram</span><span class="p">,</span> <span class="n">plot_dendro_ax</span><span class="o">=</span><span class="n">plot_dendro_ax</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">distance_in</span> <span class="o">==</span> <span class="s1">&#39;w&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">distance_in</span> <span class="o">==</span> <span class="s2">&quot;z&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">z_</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">merge_factors</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">,</span>
+                <span class="n">threshold</span><span class="o">=</span><span class="n">distance_threshold</span><span class="p">,</span>
+                <span class="n">merge_fn</span><span class="o">=</span><span class="n">merge_fn</span><span class="p">,</span>
+                <span class="n">metric</span><span class="o">=</span><span class="n">distance_metric</span><span class="p">,</span>
+                <span class="n">linkage</span><span class="o">=</span><span class="n">linkage_method</span><span class="p">,</span>
+                <span class="n">plot_dendro</span><span class="o">=</span><span class="n">plot_dendrogram</span><span class="p">,</span>
+                <span class="n">plot_dendro_ax</span><span class="o">=</span><span class="n">plot_dendro_ax</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">distance_in</span> <span class="o">==</span> <span class="s2">&quot;w&quot;</span><span class="p">:</span>
             <span class="n">w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_linear_weights</span><span class="p">()</span>
             <span class="n">d</span> <span class="o">=</span> <span class="n">spatial</span><span class="o">.</span><span class="n">distance</span><span class="o">.</span><span class="n">pdist</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">distance_metric</span><span class="p">)</span>
             <span class="n">l</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="n">hierarchy</span><span class="o">.</span><span class="n">linkage</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">linkage_method</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">z_</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">merge_factors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span>
-                <span class="n">threshold</span><span class="o">=</span><span class="n">distance_threshold</span><span class="p">,</span> <span class="n">merge_fn</span><span class="o">=</span><span class="n">merge_fn</span><span class="p">,</span>
-                <span class="n">plot_dendro</span><span class="o">=</span><span class="n">plot_dendrogram</span><span class="p">,</span> <span class="n">plot_dendro_ax</span><span class="o">=</span><span class="n">plot_dendro_ax</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">z_</span> <span class="o">=</span> <span class="n">maui</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">merge_factors</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">z_</span><span class="p">,</span>
+                <span class="n">l</span><span class="o">=</span><span class="n">l</span><span class="p">,</span>
+                <span class="n">threshold</span><span class="o">=</span><span class="n">distance_threshold</span><span class="p">,</span>
+                <span class="n">merge_fn</span><span class="o">=</span><span class="n">merge_fn</span><span class="p">,</span>
+                <span class="n">plot_dendro</span><span class="o">=</span><span class="n">plot_dendrogram</span><span class="p">,</span>
+                <span class="n">plot_dendro_ax</span><span class="o">=</span><span class="n">plot_dendro_ax</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Only &#39;z&#39; and &#39;w&#39; currently supported. See ``maui.utils.merge_factors for more flexibility.``&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="s2">&quot;Only &#39;z&#39; and &#39;w&#39; currently supported. See ``maui.utils.merge_factors for more flexibility.``&quot;</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">z_</span></div>
 
+<div class="viewcode-block" id="Maui.save"><a class="viewcode-back" href="../../maui.html#maui.Maui.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destdir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Save a maui model to disk, so that it may be reloaded later using ``load()``</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        destdir:    destination directory in which to save model files</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">os</span>
+        <span class="kn">import</span> <span class="nn">json</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">destdir</span><span class="p">,</span> <span class="s2">&quot;maui_args.json&quot;</span><span class="p">),</span> <span class="s2">&quot;wt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outfile</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_args</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vae</span><span class="o">.</span><span class="n">save_weights</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">destdir</span><span class="p">,</span> <span class="s2">&quot;maui_weights.h5&quot;</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Maui.load"><a class="viewcode-back" href="../../maui.html#maui.Maui.load">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="nb">dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load a maui model from disk, which was previously saved using ``save()``</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        dir:    The directory from which to load the maui model</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        maui_model: a maui model that was previously saved to disk</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">os</span>
+        <span class="kn">import</span> <span class="nn">json</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">dir</span><span class="p">,</span> <span class="s2">&quot;maui_args.json&quot;</span><span class="p">),</span> <span class="s2">&quot;rt&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">infile</span><span class="p">:</span>
+            <span class="n">init_args</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span>
+        <span class="n">maui_model</span> <span class="o">=</span> <span class="n">Maui</span><span class="p">(</span><span class="o">**</span><span class="n">init_args</span><span class="p">)</span>
+        <span class="n">maui_model</span><span class="o">.</span><span class="n">vae</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">dir</span><span class="p">,</span> <span class="s2">&quot;maui_weights.h5&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">maui_model</span></div>
 
     <span class="k">def</span> <span class="nf">_validate_X</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -430,7 +610,7 @@
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">!=</span> <span class="n">df1</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;All dataframes must have same samples (columns)&quot;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;One of the DataFrames was empty.&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="kc">True</span>
@@ -440,11 +620,13 @@
 
     <span class="k">def</span> <span class="nf">_dict2array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_X</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="n">new_feature_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{k}</span><span class="s1">: </span><span class="si">{c}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">X</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">new_feature_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="s2">&quot;</span><span class="si">{k}</span><span class="s2">: </span><span class="si">{c}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">X</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
         <span class="n">sample_names</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">columns</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">X</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">keys</span><span class="p">())])</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">X</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">keys</span><span class="p">())])</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
             <span class="n">index</span><span class="o">=</span><span class="n">sample_names</span><span class="p">,</span>
-            <span class="n">columns</span><span class="o">=</span><span class="n">new_feature_names</span><span class="p">)</span></div>
+            <span class="n">columns</span><span class="o">=</span><span class="n">new_feature_names</span><span class="p">,</span>
+        <span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -470,6 +652,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../autoencoder-integration.html">Multi-modal Autoencoders</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../data-normalization.html">Data and Normalization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../filtering-and-merging-latent-factors.html">Filtering and Merging latent factors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../saving-and-loading-models.html">Saving and loading models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../maui.html">The Maui Class</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../utils.html">Maui Utilities</a></li>
 </ul>
