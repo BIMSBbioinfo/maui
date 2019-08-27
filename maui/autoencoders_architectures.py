@@ -2,15 +2,14 @@
 This module contains functions that create different autoencoders
 """
 
-import keras
 import numpy as np
 import tensorflow as tf
 from keras.models import Model
 from keras import backend as K
+from keras.callbacks import Callback
 from keras import metrics, optimizers
-from keras.callbacks import Callback, TensorBoard
 from keras.layers.normalization import BatchNormalization
-from keras.layers import Input, Dense, Lambda, Layer, Activation, Concatenate
+from keras.layers import Input, Dense, Lambda, Layer, Activation
 
 
 def make_variational_layer(
@@ -307,8 +306,6 @@ def deep_vae(
         hidden_dims = [300]
     # Function for reparameterization trick to make model differentiable
     def sampling(args):
-        import tensorflow as tf
-
         # Function with args required for Keras Lambda function
         z_mean, z_log_var = args
 
