@@ -70,7 +70,7 @@ def make_variational_layer(
 
 def stacked_vae(
     input_dim,
-    hidden_dims=[300],
+    hidden_dims=None,
     latent_dim=100,
     initial_beta_val=0,
     learning_rate=0.0005,
@@ -88,8 +88,11 @@ def stacked_vae(
     """
     This is a deep, or stacked, vae.
     `hidden_dims` denotes the size of each successive hidden layer,
-    until `latend_dim` which is the middle layer.
+    until `latend_dim` which is the middle layer. The default `hidden_dims` is [300].
     """
+    if hidden_dims is None:
+        hidden_dims = [300]
+
     # Function for reparameterization trick to make model differentiable
     def sampling(args):
 
@@ -281,7 +284,7 @@ def train_model(vae, x_train, epochs, batch_size, x_val, beta, kappa, max_beta_v
 
 def deep_vae(
     input_dim,
-    hidden_dims=[300],
+    hidden_dims=None,
     latent_dim=100,
     initial_beta_val=0,
     learning_rate=0.0005,
@@ -298,7 +301,10 @@ def deep_vae(
     This is a deep, not stacked, vae.
     `hidden_dims` denotes the size of each successive hidden layer,
     until `latend_dim` which is the middle layer, which will be mean/variance of a normal distribution.
+    The default `hidden_dims` is [300].
     """
+    if hidden_dims is None:
+        hidden_dims = [300]
     # Function for reparameterization trick to make model differentiable
     def sampling(args):
         import tensorflow as tf

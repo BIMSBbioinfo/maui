@@ -38,7 +38,7 @@ class Maui(BaseEstimator):
 
     def __init__(
         self,
-        n_hidden=[1500],
+        n_hidden=None,
         n_latent=80,
         batch_size=100,
         epochs=400,
@@ -55,6 +55,8 @@ class Maui(BaseEstimator):
         relu_embedding=True,
         input_dim=None,
     ):
+        if n_hidden is None:
+            n_hidden = [1500]
         self.init_args = {k: v for k, v in locals().items() if k != "self"}
         self.n_hidden = n_hidden
         self.n_latent = n_latent
@@ -218,7 +220,7 @@ class Maui(BaseEstimator):
         optimal_k_method="ami",
         optimal_k_range=range(3, 10),
         ami_y=None,
-        kmeans_kwargs={"n_init": 1000, "n_jobs": 2},
+        kmeans_kwargs=None,
     ):
         """Cluster the samples using k-means based on the latent factors.
 
@@ -237,11 +239,14 @@ class Maui(BaseEstimator):
         ami_y:              array-like (n_samples), the ground-truth labels to use
                             when picking K by "best AMI against ground-truth" method.
         kmeans_kwargs:      optional, kwargs for initialization of sklearn.cluster.KMeans
+                            Default: {"n_init": 1000, "n_jobs": 2}
 
         Returns
         -------
         yhat:   Series (n_samples) cluster labels for each sample
         """
+        if kmeans_kwargs is None:
+            kmeans_kwargs = {"n_init": 1000, "n_jobs": 2}
         if k is not None:
             return pd.Series(
                 KMeans(k, **kmeans_kwargs).fit_predict(self.z_), index=self.z_.index
@@ -376,7 +381,7 @@ class Maui(BaseEstimator):
         clinical_only=True,
         duration_column="duration",
         observed_column="observed",
-        cox_penalties=[0.1, 1, 10, 100, 1000, 10000],
+        cox_penalties=None,
         cv_folds=5,
         sel_clin_alpha=0.05,
         sel_clin_penalty=0,
@@ -398,7 +403,7 @@ class Maui(BaseEstimator):
                             indicating whether time of death is known
         cox_penalties:      penalty coefficient in Cox PH solver (see ``lifelines.CoxPHFitter``)
                             to try. Returns the best c given by the different penalties
-                            (by cross-validation)
+                            (by cross-validation). Defaults to [0.1, 1, 10, 100, 1000, 10000].
         cv_folds:           number of cross-validation folds to compute C
         sel_clin_penalty:   CPH penalizer to use when selecting clinical factors
         sel_clin_alpha:     significance level when selecting clinical factors
@@ -409,6 +414,8 @@ class Maui(BaseEstimator):
             one value per cv_fold
 
         """
+        if cox_penalties is None:
+            cox_penalties = [0.1, 1, 10, 100, 1000, 10000]
         if clinical_only:
             z = self.select_clinical_factors(
                 survival,

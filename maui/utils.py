@@ -373,7 +373,7 @@ def compute_harrells_c(
     survival,
     duration_column="duration",
     observed_column="observed",
-    cox_penalties=[0.1, 1, 10, 100, 1000, 10000],
+    cox_penalties=None,
     cv_folds=5,
 ):
     """Compute's Harrell's c-Index for a Cox Proportional Hazards regression modeling
@@ -390,7 +390,7 @@ def compute_harrells_c(
                         indicating whether time of death is known
     cox_penalties:      penalty coefficient in Cox PH solver (see ``lifelines.CoxPHFitter``)
                         to try. Returns the best c given by the different penalties
-                        (by cross-validation)
+                        (by cross-validation). Defualt: [0.1, 1, 10, 100, 1000, 10000]
     cv_folds:           number of cross-validation folds to compute C
 
     Returns
@@ -399,6 +399,8 @@ def compute_harrells_c(
         one value per cv_fold
 
     """
+    if cox_penalties is None:
+        cox_penalties = [0.1, 1, 10, 100, 1000, 10000]
     cvcs = [
         _cv_coxph_c(z, survival, p, duration_column, observed_column, cv_folds)
         for p in cox_penalties
