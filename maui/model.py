@@ -554,13 +554,13 @@ class Maui(BaseEstimator):
         self.vae.save_weights(os.path.join(destdir, "maui_weights.h5"))
 
     @staticmethod
-    def load(dir):
+    def load(directory):
         """Load a maui model from disk, which was previously saved using ``save()``
 
         Parameters
         ----------
 
-        dir:    The directory from which to load the maui model
+        directory:    The directory from which to load the maui model
 
         Returns
         -------
@@ -570,10 +570,10 @@ class Maui(BaseEstimator):
         import os
         import json
 
-        with open(os.path.join(dir, "maui_args.json"), "rt") as infile:
+        with open(os.path.join(directory, "maui_args.json"), "rt") as infile:
             init_args = json.load(infile)
         maui_model = Maui(**init_args)
-        maui_model.vae.load_weights(os.path.join(dir, "maui_weights.h5"))
+        maui_model.vae.load_weights(os.path.join(directory, "maui_weights.h5"))
         return maui_model
 
     def _validate_X(self, X):
