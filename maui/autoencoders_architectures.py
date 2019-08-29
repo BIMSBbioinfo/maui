@@ -9,7 +9,7 @@ from keras import backend as K
 from keras.callbacks import Callback
 from keras import metrics, optimizers
 from keras.layers.normalization import BatchNormalization
-from keras.layers import Input, Dense, Lambda, Layer, Activation
+from keras.layers import Input, Dense, Lambda, Activation
 
 
 def make_variational_layer(
@@ -94,7 +94,6 @@ def stacked_vae(
 
     # Function for reparameterization trick to make model differentiable
     def sampling(args):
-
         import tensorflow as tf
 
         # Function with args required for Keras Lambda function
