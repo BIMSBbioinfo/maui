@@ -231,7 +231,7 @@ def estimate_kaplan_meier(
     survival:           pd.DataFrame with the same index as y, with columns for
                         the duration (survival time for each patient) and whether
                         or not the death was observed. If the death was not
-                        observed (sensored), the duration is the time of the last
+                        observed (censored), the duration is the time of the last
                         followup.
     duration_column:        the name of the column in  ``survival`` with the duration
     observed_column:    the name of the column in ``survival`` with True/False values

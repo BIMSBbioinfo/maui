@@ -87,7 +87,7 @@ def stacked_vae(
     """
     This is a deep, or stacked, vae.
     `hidden_dims` denotes the size of each successive hidden layer,
-    until `latend_dim` which is the middle layer. The default `hidden_dims` is [300].
+    until `latent_dim` which is the middle layer. The default `hidden_dims` is [300].
     """
     if hidden_dims is None:
         hidden_dims = [300]
