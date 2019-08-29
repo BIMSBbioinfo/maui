@@ -3,6 +3,7 @@ python:
   - "3.6"
 # command to install dependencies
 install:
+  - pip install setuptools>=41.0.0
   - pip install lifelines pytest>=3.6.0 pytest-cov>=2.6.1 codecov
   - python setup.py install
 # command to run tests
