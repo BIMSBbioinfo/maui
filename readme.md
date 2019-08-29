@@ -15,7 +15,7 @@ Multi-omics Autoencoder Integration (**maui**) is a python package for multi-omi
 
 ## Installation
 
-maui works with Python 3.6. The easiest way to install is from pypi:
+maui works with Python 3.6 and TensorFlow 1.1 (does not yet support the yet unreleased TensorFlow 2.0). The easiest way to install is from pypi:
 
 	pip install -U maui-tools
 
