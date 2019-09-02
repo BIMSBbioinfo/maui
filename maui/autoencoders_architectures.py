@@ -221,10 +221,7 @@ def stacked_vae(
         rnaseq_input, reconstruction
     )
     kl_loss = -0.5 * K.sum(
-        1
-        + l_log_var_dense_linear
-        - K.square(l_mean_dense_linear)
-        - K.exp(l_log_var_dense_linear),
+        1 + l_log_var_encoded - K.square(l_mean_encoded) - K.exp(l_log_var_encoded),
         axis=-1,
     )
     vae_loss = K.mean(reconstruction_loss + (K.get_value(beta) * kl_loss))
@@ -416,10 +413,7 @@ def deep_vae(
         rnaseq_input, reconstruction
     )
     kl_loss = -0.5 * K.sum(
-        1
-        + l_log_var_dense_linear
-        - K.square(l_mean_dense_linear)
-        - K.exp(l_log_var_dense_linear),
+        1 + l_log_var_encoded - K.square(l_mean_encoded) - K.exp(l_log_var_encoded),
         axis=-1,
     )
     vae_loss = K.mean(reconstruction_loss + (K.get_value(beta) * kl_loss))
