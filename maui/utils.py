@@ -183,7 +183,7 @@ def compute_roc(z, y, classifier=LinearSVC(C=0.001), cv_folds=10):
     Returns
     -------
     roc_curves: dict, one key per class as well as "mean", each value is a dataframe
-                containing the tpr (true positive rate) and fpr (falce positive rate)
+                containing the tpr (true positive rate) and fpr (false positive rate)
                 defining that class (or the mean) ROC.
     """
     class_names = sorted(y.unique())
