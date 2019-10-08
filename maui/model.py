@@ -115,7 +115,7 @@ class Maui(BaseEstimator):
             max_beta_val=max_beta_val,
         )
 
-    def fit(self, X, y=None, X_validation=None):
+    def fit(self, X, y=None, X_validation=None, *args, **kwargs):
         """Train autoencoder model
 
         Parameters
@@ -149,7 +149,9 @@ class Maui(BaseEstimator):
             self.encoder = encoder
             self.sampling_encoder = sampling_encoder
             self.decoder = decoder
-        hist = self.training_fn(vae=self.vae, x_train=self.x_, x_val=x_test, beta=self.beta)
+        hist = self.training_fn(
+            vae=self.vae, x_train=self.x_, x_val=x_test, beta=self.beta, **kwargs
+        )
         self.hist = pd.DataFrame(hist.history)
         return self
 
