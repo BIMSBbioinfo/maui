@@ -186,9 +186,8 @@ class Maui(BaseEstimator):
             index=self.x_.index,
             columns=[f"LF{i}" for i in range(1, self.n_latent + 1)],
         )
-        self.feature_correlations = maui.utils.correlate_factors_and_features(
-            self.z_, self.x_
-        )
+
+        self.feature_correlations_ = None
         self.w_ = None
         return self.z_
 
@@ -446,6 +445,24 @@ class Maui(BaseEstimator):
                 self.z_, self.x_.T
             )
         return self.w_
+
+    def get_feature_correlations(self):
+        """Get correlation coefficients between input features and latent factors.
+
+        Returns
+        -------
+        r:  (n_features, n_latent_factors) DataFrame
+            r_{ij} is the correlation coefficient between feature `i`
+            and latent factor `j`.
+        """
+        if (
+            not hasattr(self, "feature_correlations_")
+            or self.feature_correlations_ is None
+        ):
+            self.feature_correlations_ = maui.utils.correlate_factors_and_features(
+                self.z_, self.x_
+            )
+        return self.feature_correlations_
 
     def drop_unexplanatory_factors(self, threshold=0.02):
         """Drops factors which have a low R^2 score in a univariate linear model
