@@ -1,5 +1,10 @@
 # Changelog
 
+## [unreleased] - ????-??-??
+
+### Fixed
+
+- Fixed a bug in fine-tuning models that were pre-trained, when the pre-trained model is first deserialized from disk.
 
 ## [0.1.7] - 2019-10-08
 

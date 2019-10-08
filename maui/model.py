@@ -149,7 +149,7 @@ class Maui(BaseEstimator):
             self.encoder = encoder
             self.sampling_encoder = sampling_encoder
             self.decoder = decoder
-        hist = self.training_fn(vae=vae, x_train=self.x_, x_val=x_test, beta=beta)
+        hist = self.training_fn(vae=self.vae, x_train=self.x_, x_val=x_test, beta=self.beta)
         self.hist = pd.DataFrame(hist.history)
         return self
 
