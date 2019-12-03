@@ -11,7 +11,7 @@
 <!-- [![Build Status](https://travis-ci.com/BIMSBbioinfo/maui.svg?branch=master)](https://travis-ci.com/BIMSBbioinfo/maui) -->
 
 
-Multi-omics Autoencoder Integration (**maui**) is a python package for multi-omics data analysis. It is based on a bayesian latent factor model, with inference done using artificial neural networks. For details, check out our pre-print on bioRxiv: https://www.biorxiv.org/content/early/2018/11/12/464743
+Multi-omics Autoencoder Integration (**maui**) is a python package for multi-omics data analysis. It is based on a bayesian latent factor model, with inference done using artificial neural networks. For details, check out our LSA paper: https://www.life-science-alliance.org/content/2/6/e201900517
 
 ## Installation
 
@@ -37,7 +37,7 @@ See [the vignette](vignette/maui_vignette.ipynb), and check out [the documentati
 
 ## Citation
 
->  Evaluation of colorectal cancer subtypes and cell lines using deep learning. Jonathan Ronen, Sikander Hayat, Altuna Akalin. bioRxiv 464743; doi: https://doi.org/10.1101/464743
+>  Evaluation of colorectal cancer subtypes and cell lines using deep learning. Jonathan Ronen, Sikander Hayat, Altuna Akalin. Life Science Alliance Dec 2019, 2 (6) e201900517; DOI: 10.26508/lsa.201900517
 
 ## Contributing
 
