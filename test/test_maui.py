@@ -261,7 +261,7 @@ def test_select_clinical_factors():
         index=[f"sample {i}" for i in range(11)],
     )
 
-    z_clin = maui_model.select_clinical_factors(survival, cox_penalizer=1)
+    z_clin = maui_model.select_clinical_factors(survival, cox_penalizer=1, alpha=.1)
     assert "LF0" in z_clin.columns
     assert "LF5" not in z_clin.columns
 

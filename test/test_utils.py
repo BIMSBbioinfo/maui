@@ -213,7 +213,7 @@ def test_select_clinical_factors():
         index=[f"sample {i}" for i in range(11)],
     )
 
-    z_clinical = utils.select_clinical_factors(dummy_z, survival, cox_penalizer=1)
+    z_clinical = utils.select_clinical_factors(dummy_z, survival, cox_penalizer=1, alpha=.1)
     assert "LF0" in z_clinical.columns
     assert "LF1" in z_clinical.columns
     assert "LF2" in z_clinical.columns
