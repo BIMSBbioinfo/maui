@@ -34,6 +34,10 @@ class Maui(BaseEstimator):
         the intermediate layers are also variational. If 'deep', will train a deep VAE
         where the intermediate layers are regular (ReLU) units, and only the middle
         (latent) layer is variational.
+
+    verbose:
+         Integer. 0, 1, or 2. Verbosity mode. 0 = silent, 1 = progress bar, 2 = one line per epoch.
+         default: 0
     """
 
     def __init__(
@@ -54,6 +58,7 @@ class Maui(BaseEstimator):
         relu_intermediaries=True,
         relu_embedding=True,
         input_dim=None,
+        verbose=0,
     ):
         if n_hidden is None:
             n_hidden = [1500]
@@ -113,6 +118,7 @@ class Maui(BaseEstimator):
             batch_size=batch_size,
             kappa=kappa,
             max_beta_val=max_beta_val,
+            verbose=verbose
         )
 
     def fit(self, X, y=None, X_validation=None, *args, **kwargs):

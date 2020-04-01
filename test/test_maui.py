@@ -519,3 +519,16 @@ def test_maui_can_load_from_folder():
         maui_model.transform({"d1": df1, "d2": df2}),
         maui_model_from_disk.transform({"d1": df1, "d2": df2})
         )
+
+def test_maui_can_print_verbose_training(capsys):
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model = maui_model.fit({"d1": df1, "d2": df2})
+
+    stdout, stderr = capsys.readouterr()
+    assert stdout == ""
+
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1, verbose=1)
+    maui_model = maui_model.fit({"d1": df1, "d2": df2})
+
+    stdout, stderr = capsys.readouterr()
+    assert "Epoch" in stdout

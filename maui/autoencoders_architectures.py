@@ -263,13 +263,13 @@ class LadderCallback(Callback):
             K.set_value(self.beta, K.get_value(self.beta) + self.kappa)
 
 
-def train_model(vae, x_train, epochs, batch_size, x_val, beta, kappa, max_beta_val):
+def train_model(vae, x_train, epochs, batch_size, x_val, beta, kappa, max_beta_val, verbose=0):
     K.get_session().run(tf.global_variables_initializer())
     hist = vae.fit(
         np.array(x_train),
         shuffle=True,
         epochs=epochs,
-        verbose=0,
+        verbose=verbose,
         batch_size=batch_size,
         validation_data=(np.array(x_val), None),
         callbacks=[LadderCallback(beta, kappa, max_beta_val)],
