@@ -294,8 +294,9 @@ class Maui(BaseEstimator):
                 name=score_name,
             )
             self.kmeans_scores.index.name = "K"
-            self.optimal_k_ = np.argmax(self.kmeans_scores)
-            self.yhat_ = yhats[self.optimal_k_]
+            opt_k_index = np.argmax(self.kmeans_scores)
+            self.optimal_k_ = self.kmeans_scores.index[opt_k_index]
+            self.yhat_ = yhats[opt_k_index]
             return self.yhat_
 
     def compute_roc(self, y, **kwargs):

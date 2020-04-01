@@ -122,7 +122,7 @@ def test_maui_clusters_picks_optimal_k_by_ami():
         maui_model.cluster(
             ami_y=the_y, optimal_k_range=[1, 2, 3]
         )  # the second trial is k=2
-
+        print(maui_model.kmeans_scores)
         assert maui_model.optimal_k_ == 2
 
 

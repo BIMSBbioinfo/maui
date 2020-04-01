@@ -19,8 +19,8 @@ setup(
     long_description_content_type="text/markdown",
     install_requires=[
         "pytest",
-        "numpy>=1.14.5",
-        "pandas",
+        "numpy>=1.18.2",
+        "pandas>=1.0.3",
         "scipy==1.2.1",
         "scikit-learn",
         "keras",
