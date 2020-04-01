@@ -310,12 +310,12 @@ def test_maui_computes_harrells_c():
         duration_column="duration",
         observed_column="observed",
         cox_penalties=[0.1, 1, 10, 100, 1000, 10000],
-        cv_folds=2,
-        sel_clin_alpha=0.05,
+        cv_folds=3,
+        sel_clin_alpha=0.1,
         sel_clin_penalty=1,
     )
     print(cs)
-    assert np.allclose(cs, [0.8, 0.8])
+    assert np.allclose(cs, [0.5, 0.8, 0.5], atol=.05)
 
 
 def test_maui_produces_same_prediction_when_run_twice():

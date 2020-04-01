@@ -219,7 +219,7 @@ def test_select_clinical_factors():
     assert "LF2" in z_clinical.columns
 
     assert "LF3" not in z_clinical.columns
-    assert "LF4" not in z_clinical.columns
+    assert "LF4" not in z_clinical.columnsharrell
     assert "LF5" not in z_clinical.columns
 
 
@@ -260,8 +260,8 @@ def test_compute_harrells_c():
         dict(duration=durations, observed=observed),
         index=[f"sample {i}" for i in range(11)],
     )
-    z_clinical = utils.select_clinical_factors(dummy_z, survival, cox_penalizer=1)
+    z_clinical = utils.select_clinical_factors(dummy_z, survival, cox_penalizer=1, alpha=.1)
 
     np.random.seed(0)
-    c = utils.compute_harrells_c(z_clinical, survival, cv_folds=2)
-    assert np.allclose(c, [0.8, 0.8])
+    c = utils.compute_harrells_c(z_clinical, survival, cv_folds=3)
+    assert np.allclose(c, [0.5, 0.8, 0.5], atol=.05)

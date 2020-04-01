@@ -10,6 +10,7 @@ from scipy import spatial
 from scipy import cluster
 from collections import Counter
 from sklearn.svm import LinearSVC
+from sklearn.model_selection import KFold
 from sklearn.metrics import roc_curve, auc
 from sklearn.preprocessing import label_binarize
 from sklearn.preprocessing import StandardScaler
@@ -427,9 +428,21 @@ def _cv_coxph_c(
     cph = lifelines.CoxPHFitter(penalizer=penalty)
     survdf = pd.concat([survival, z], axis=1, sort=False).dropna()
 
-    scores = lifelines.utils.k_fold_cross_validation(
-        cph, survdf, duration_column, event_col=observed_column, k=cv_folds
-    )
+    kfold = KFold(cv_folds)
+    scores = list()
+
+    for train_index, test_index in kfold.split(survdf):
+        x_train, x_test = survdf.iloc[train_index], survdf.iloc[test_index]
+
+        cph.fit(x_train, duration_column, observed_column)
+        cindex = lifelines.utils.concordance_index(
+            x_test[duration_column],
+            -cph.predict_partial_hazard(x_test),
+            x_test[observed_column]
+        )
+        scores.append(cindex)
+
+
     return scores
 
 
