@@ -219,7 +219,7 @@ def test_select_clinical_factors():
     assert "LF2" in z_clinical.columns
 
     assert "LF3" not in z_clinical.columns
-    assert "LF4" not in z_clinical.columnsharrell
+    assert "LF4" not in z_clinical.columns
     assert "LF5" not in z_clinical.columns
 
 

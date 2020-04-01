@@ -202,6 +202,7 @@ def test_maui_computes_roc_and_auc():
 
 
 def test_maui_clusters_only_samples_in_y_index_when_optimizing():
+    np.random.seed(0)
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
     maui_model.z_ = pd.DataFrame(
         np.random.randn(10, 2),
