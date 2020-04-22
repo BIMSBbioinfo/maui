@@ -533,3 +533,25 @@ def test_maui_can_print_verbose_training(capsys):
 
     stdout, stderr = capsys.readouterr()
     assert "Epoch" in stdout
+
+def test_maui_model_makes_2_layer_vae():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1, input_dim=10)
+    layers_names = [l.name for l in maui_model.vae.layers]
+
+    assert "hidden_dim_0_mean" in layers_names
+    assert "latent_mean" in layers_names
+    assert "decode_hidden_0" in layers_names
+    assert "reconstruction" in layers_names
+
+    assert "decode_hidden_1" not in layers_names
+
+def test_maui_model_makes_one_layer_vae():
+    maui_model = Maui(n_hidden=[], n_latent=2, epochs=1, input_dim=10)
+    layers_names = [l.name for l in maui_model.vae.layers]
+
+    print(layers_names)
+
+    assert layers_names[-1] == "reconstruction"
+
+    assert not any("decode_hidden" in name for name in layers_names), "Has a decode hidden..."
+    assert not any("hidden_dim" in name for name in layers_names), "Has a hidden dim..."

@@ -202,12 +202,7 @@ def stacked_vae(
             )(prev)
             prev = h
     else:
-        h = Dense(
-            latent_dim,
-            kernel_initializer="glorot_uniform",
-            activation="relu",
-            name="decode_hidden",
-        )(prev)
+        h = l
     reconstruction = Dense(
         original_dim,
         kernel_initializer="glorot_uniform",
