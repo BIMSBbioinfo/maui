@@ -78,6 +78,7 @@ class Maui(BaseEstimator):
                 epsilon_std=epsilon_std,
                 batch_normalize_inputs=batch_normalize_inputs,
                 batch_normalize_intermediaries=batch_normalize_intermediaries,
+                batch_normalize_embedding=batch_normalize_embedding,
                 relu_intermediaries=relu_intermediaries,
                 relu_embedding=relu_embedding,
             )
