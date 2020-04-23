@@ -259,7 +259,6 @@ class LadderCallback(Callback):
 
 
 def train_model(vae, x_train, epochs, batch_size, x_val, beta, kappa, max_beta_val, verbose=0):
-    K.get_session().run(tf.global_variables_initializer())
     hist = vae.fit(
         np.array(x_train),
         shuffle=True,
