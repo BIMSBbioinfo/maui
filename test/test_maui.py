@@ -79,6 +79,20 @@ def test_maui_saves_w():
     assert w is not None
     assert hasattr(maui_model, "w_")
 
+def test_maui_saves_neural_weight_product():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    z = maui_model.fit_transform({"d1": df1, "d2": df2})
+    nwp = maui_model.get_neural_weight_product()
+    assert nwp is not None
+    assert hasattr(maui_model, "nwp_")
+
+    print(maui_model.encoder.summary())
+
+    w1 = maui_model.encoder.layers[2].get_weights()[0]
+    w2 = maui_model.encoder.layers[3].get_weights()[0]
+
+    nwp_11 = np.dot(w1[0,:], w2[:,0])
+    assert np.allclose(nwp_11, nwp.iloc[0,0])
 
 def test_maui_clusters_with_single_k():
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)

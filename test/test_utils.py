@@ -78,7 +78,6 @@ def test_filter_factors_by_r2():
     z_filt = utils.filter_factors_by_r2(dummy_z, dummy_x)
     assert z_filt.columns.tolist() == ["LF1", "LF2"]
 
-
 def test_map_factors_to_feaures_using_linear_models():
     dummy_z = pd.DataFrame(
         [[0, 1], [1, 0]], index=["sample 1", "sample 2"], columns=["LF1", "LF2"]

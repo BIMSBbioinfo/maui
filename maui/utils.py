@@ -2,6 +2,7 @@
 The maui.utils model contains utility functions for multi-omics analysis
 using maui.
 """
+import keras
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -113,6 +114,28 @@ def filter_factors_by_r2(z, x, threshold=0.02):
         regressor.fit(z.values[:, i].reshape(-1, 1), scale(x).T)
         scores.append(regressor.score(z.values[:, i].reshape(-1, 1), scale(x).T))
     return z.iloc[:, pd.Series(scores)[pd.Series(scores) > threshold].index]
+
+
+def neural_path_weight_product(model):
+    """The product of weights along the path from from input
+    features to latent factors.
+
+    Parameters
+    ----------
+    model: a maui model
+
+    Returns
+    -------
+    nwp: (n_features, n_latent_factors) DataFrame of neural weight products
+    """
+    path_ws = list()
+    for layer in model.encoder.layers:
+        if isinstance(layer, keras.layers.core.Dense):
+            path_ws.append(layer.get_weights()[0])
+
+    return pd.DataFrame(
+        np.linalg.multi_dot(path_ws), index=model.x_.columns, columns=model.z_.columns
+    )
 
 
 def map_factors_to_feaures_using_linear_models(z, x):
@@ -438,10 +461,9 @@ def _cv_coxph_c(
         cindex = lifelines.utils.concordance_index(
             x_test[duration_column],
             -cph.predict_partial_hazard(x_test),
-            x_test[observed_column]
+            x_test[observed_column],
         )
         scores.append(cindex)
-
 
     return scores
 

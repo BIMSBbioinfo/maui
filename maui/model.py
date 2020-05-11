@@ -119,7 +119,7 @@ class Maui(BaseEstimator):
             batch_size=batch_size,
             kappa=kappa,
             max_beta_val=max_beta_val,
-            verbose=verbose
+            verbose=verbose,
         )
 
     def fit(self, X, y=None, X_validation=None, *args, **kwargs):
@@ -473,6 +473,21 @@ class Maui(BaseEstimator):
                 self.z_, self.x_
             )
         return self.feature_correlations_
+
+    def get_neural_weight_product(self):
+        """Get the product of neural weights from feature input to latent factors.
+
+        Returns
+        -------
+        nwp:    (n_features, n_latent_factors) DataFrame
+                nwp_{ij} is the product of the weights in the encoder network
+                along the path leading from input feature `i` to latent
+                factor `j`.
+
+        """
+        if not hasattr(self, "nwp_") or self.nwp_ is None:
+            self.nwp_ = maui.utils.neural_path_weight_product(self)
+        return self.nwp_
 
     def drop_unexplanatory_factors(self, threshold=0.02):
         """Drops factors which have a low R^2 score in a univariate linear model
