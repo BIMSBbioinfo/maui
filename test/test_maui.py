@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from maui import Maui
+from maui.maui_warnings import MauiWarning
 
 
 samples = [f"Sample_{i}" for i in range(10)]
@@ -569,3 +570,31 @@ def test_maui_model_makes_one_layer_vae():
 
     assert not any("decode_hidden" in name for name in layers_names), "Has a decode hidden..."
     assert not any("hidden_dim" in name for name in layers_names), "Has a hidden dim..."
+
+def test_maui_model_validates_feature_names_on_predict_after_fit():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model.fit({"d1": df1, "d2": df2})
+
+    z = maui_model.transform({"d1": df1, "d2": df2})
+
+    df1_wrong_features = df1.reindex(df1.index[:len(df1.index)-1])
+    with pytest.raises(ValueError):
+        z = maui_model.transform({"df1": df1_wrong_features, "df2": df2})
+    
+def test_maui_model_saves_feature_names_to_disk():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model = maui_model.fit({"d1": df1, "d2": df2})
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        maui_model.save(tmpdirname)
+        maui_model_from_disk = Maui.load(tmpdirname)
+    assert maui_model.feature_names == maui_model_from_disk.feature_names
+
+def test_maui_model_loads_model_without_feature_names_from_disk_and_warns():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+    maui_model = maui_model.fit({"d1": df1, "d2": df2})
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        maui_model.save(tmpdirname)
+        os.remove(os.path.join(tmpdirname, "maui_feature_names.txt"))
+        with pytest.warns(MauiWarning):
+            maui_model_from_disk = Maui.load(tmpdirname)
+        assert maui_model_from_disk.feature_names is None

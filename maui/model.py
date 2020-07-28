@@ -1,3 +1,4 @@
+import warnings
 import maui.utils
 import numpy as np
 import pandas as pd
@@ -5,6 +6,7 @@ from functools import partial
 from scipy import spatial, cluster
 from sklearn.cluster import KMeans
 from sklearn.base import BaseEstimator
+from .maui_warnings import MauiWarning
 from .autoencoders_architectures import stacked_vae, deep_vae, train_model
 
 
@@ -122,6 +124,8 @@ class Maui(BaseEstimator):
             verbose=verbose,
         )
 
+        self.feature_names = None
+
     def fit(self, X, y=None, X_validation=None, *args, **kwargs):
         """Train autoencoder model
 
@@ -139,8 +143,14 @@ class Maui(BaseEstimator):
         -------
         self : Maui object
         """
-        self.x_ = self._dict2array(X)
+        x_ = self._dict2array(X)
+        self._validate_indices(x_)
+        self.x_ = x_
+
         x_test = self._dict2array(X_validation) if X_validation else self.x_
+
+        if self.feature_names != x_test.columns.tolist():
+            raise ValueError("Feature mismatch between X and X_val!")
 
         if not hasattr(self, "vae"):
             vae, encoder, sampling_encoder, decoder, beta = self.architecture(
@@ -189,7 +199,9 @@ class Maui(BaseEstimator):
         else:
             raise ValueError("`encoder` must be one of 'mean' or 'sample'")
 
-        self.x_ = self._dict2array(X)
+        x_ = self._dict2array(X)
+        self._validate_indices(x_)
+        self.x_ = x_
         self.z_ = pd.DataFrame(
             the_encoder.predict(self.x_),
             index=self.x_.index,
@@ -594,6 +606,10 @@ class Maui(BaseEstimator):
         with open(os.path.join(destdir, "maui_args.json"), "wt") as outfile:
             json.dump(self.init_args, outfile)
         self.vae.save_weights(os.path.join(destdir, "maui_weights.h5"))
+        with open(os.path.join(destdir, "maui_feature_names.txt"), "wt") as outfile:
+            for fn in self.feature_names:
+                outfile.write(fn)
+                outfile.write("\n")
 
     @staticmethod
     def load(directory):
@@ -616,6 +632,17 @@ class Maui(BaseEstimator):
             init_args = json.load(infile)
         maui_model = Maui(**init_args)
         maui_model.vae.load_weights(os.path.join(directory, "maui_weights.h5"))
+        if os.path.isfile(os.path.join(directory, "maui_feature_names.txt")):
+            with open(
+                os.path.join(directory, "maui_feature_names.txt"), "rt"
+            ) as infile:
+                maui_model.feature_names = [l.strip() for l in infile]
+        else:
+            warnings.warn(
+                MauiWarning(
+                    "Feature names not found in save dir. Loaded model will not perform feature name validation on first call!"
+                )
+            )
         return maui_model
 
     def _validate_X(self, X):
@@ -631,8 +658,12 @@ class Maui(BaseEstimator):
 
         return True
 
-    def _validate_indices(self):
-        pass
+    def _validate_indices(self, x):
+        if self.feature_names is None:
+            self.feature_names = x.columns.tolist()
+        else:
+            if self.feature_names != x.columns.tolist():
+                raise ValueError("Feature mismatch with previously fit data!")
 
     def _dict2array(self, X):
         self._validate_X(X)
