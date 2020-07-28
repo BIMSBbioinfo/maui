@@ -3,6 +3,7 @@ import maui.utils
 import numpy as np
 import pandas as pd
 from functools import partial
+from keras import backend as K
 from scipy import spatial, cluster
 from sklearn.cluster import KMeans
 from sklearn.base import BaseEstimator
@@ -233,6 +234,59 @@ class Maui(BaseEstimator):
         """
         self.fit(X, X_validation=X_validation, y=y)
         return self.transform(X, encoder=encoder)
+
+    def fine_tune(
+        self,
+        X,
+        batch_size=100,
+        epochs=100,
+        initial_beta_val=1,
+        kappa=1.0,
+        max_beta_val=1,
+        learning_rate=0.0005,
+        verbose=0,
+        **kwargs
+    ):
+        """Fine-tune autoencoder model. This is meant to be used with a pre-trained model.
+
+        Parameters
+        ----------
+        X:      dict with multi-modal dataframes, containing training data, e.g.
+                    {'mRNA': df1, 'SNP': df2},
+                    df1, df2, etc. are (n_features, n_samples) pandas.DataFrame's.
+                    The sample names must match, the feature names need not.
+
+        batch_size: int (default 100)
+                    The size of the mini-batches used for training the network
+
+        epochs:     int (default 100)
+                    The number of epoches to use for training the network
+
+        Returns
+        -------
+        self : Maui object
+        """
+        if not hasattr(self, "vae"):
+            raise Exception("Cannot call fine_tune() on a model that hasn't been trained yet!")
+        x_ = self._dict2array(X)
+        self._validate_indices(x_)
+        self.x_ = x_
+
+        fine_tunine_fn = partial(
+            train_model,
+            epochs=epochs,
+            batch_size=batch_size,
+            kappa=kappa,
+            max_beta_val=max_beta_val,
+            verbose=verbose,
+        )
+        K.set_value(self.beta, initial_beta_val)
+        hist = fine_tunine_fn(
+            vae=self.vae, x_train=self.x_, x_val=self.x_, beta=self.beta, **kwargs
+        )
+        self.hist = pd.DataFrame(hist.history)
+        return self
+
 
     def cluster(
         self,

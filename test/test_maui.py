@@ -598,3 +598,16 @@ def test_maui_model_loads_model_without_feature_names_from_disk_and_warns():
         with pytest.warns(MauiWarning):
             maui_model_from_disk = Maui.load(tmpdirname)
         assert maui_model_from_disk.feature_names is None
+
+def test_maui_can_fine_tune():
+    maui_model = Maui(n_hidden=[], n_latent=2, epochs=1)
+    maui_model = maui_model.fit({"d1": df1, "d2": df2})
+    maui_model.fine_tune({"d1": df1, "d2": df2}, epochs=1)
+
+def test_maui_complains_if_fine_tune_with_wrong_features():
+    maui_model = Maui(n_hidden=[], n_latent=2, epochs=1)
+    maui_model.fit({"d1": df1, "d2": df2})
+
+    df1_wrong_features = df1.reindex(df1.index[:len(df1.index)-1])
+    with pytest.raises(ValueError):
+        z = maui_model.fine_tune({"df1": df1_wrong_features, "df2": df2})
