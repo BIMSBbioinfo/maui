@@ -6,6 +6,8 @@ install:
   - pip install --upgrade setuptools>=41.0.0
   - pip install scipy==1.2.1
   - pip install lifelines pytest>=3.6.0 pytest-cov>=2.6.1 codecov
+  - pip install tensorflow==1.*
+  - pip install keras==2.3.*
   - python setup.py install
 # command to run tests
 script:
