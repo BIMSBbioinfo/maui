@@ -148,6 +148,8 @@ class Maui(BaseEstimator):
         self._validate_indices(x_)
         self.x_ = x_
 
+        self.nwp_ = self.feature_correlations_ = self.w_ = None
+
         x_test = self._dict2array(X_validation) if X_validation else self.x_
 
         if self.feature_names != x_test.columns.tolist():
@@ -271,6 +273,8 @@ class Maui(BaseEstimator):
         x_ = self._dict2array(X)
         self._validate_indices(x_)
         self.x_ = x_
+
+        self.nwp_ = self.feature_correlations_ = self.w_ = None
 
         fine_tunine_fn = partial(
             train_model,

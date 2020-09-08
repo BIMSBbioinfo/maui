@@ -80,6 +80,7 @@ def test_maui_saves_w():
     assert w is not None
     assert hasattr(maui_model, "w_")
 
+
 def test_maui_saves_neural_weight_product():
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
     z = maui_model.fit_transform({"d1": df1, "d2": df2})
@@ -92,8 +93,23 @@ def test_maui_saves_neural_weight_product():
     w1 = maui_model.encoder.layers[2].get_weights()[0]
     w2 = maui_model.encoder.layers[3].get_weights()[0]
 
-    nwp_11 = np.dot(w1[0,:], w2[:,0])
-    assert np.allclose(nwp_11, nwp.iloc[0,0])
+    nwp_11 = np.dot(w1[0, :], w2[:, 0])
+    assert np.allclose(nwp_11, nwp.iloc[0, 0])
+
+
+def test_maui_updates_neural_weight_product_when_training():
+    maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
+
+    z_before = maui_model.fit_transform({"d1": df1, "d2": df2})
+    nwp_before_fine_tuning = maui_model.get_neural_weight_product()
+
+    maui_model.fine_tune({"d1": df1, "d2": df2})
+    z_after = maui_model.transform({"d1": df1, "d2": df2})
+    nwp_after_fine_tuning = maui_model.get_neural_weight_product()
+
+    assert not np.allclose(z_before, z_after)
+    assert not np.allclose(nwp_before_fine_tuning, nwp_after_fine_tuning)
+
 
 def test_maui_clusters_with_single_k():
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
@@ -277,7 +293,7 @@ def test_select_clinical_factors():
         index=[f"sample {i}" for i in range(11)],
     )
 
-    z_clin = maui_model.select_clinical_factors(survival, cox_penalizer=1, alpha=.1)
+    z_clin = maui_model.select_clinical_factors(survival, cox_penalizer=1, alpha=0.1)
     assert "LF0" in z_clin.columns
     assert "LF5" not in z_clin.columns
 
@@ -331,7 +347,7 @@ def test_maui_computes_harrells_c():
         sel_clin_penalty=1,
     )
     print(cs)
-    assert np.allclose(cs, [0.5, 0.8, 0.5], atol=.05)
+    assert np.allclose(cs, [0.5, 0.8, 0.5], atol=0.05)
 
 
 def test_maui_produces_same_prediction_when_run_twice():
@@ -512,13 +528,14 @@ def test_maui_merge_latent_factors_complains_if_unknown_merge_by():
             distance_in="xxx", distance_metric="euclidean"
         )
 
+
 def test_maui_can_save_to_folder():
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
     maui_model = maui_model.fit({"d1": df1, "d2": df2})
     with tempfile.TemporaryDirectory() as tmpdirname:
         maui_model.save(tmpdirname)
-        assert os.path.isfile(os.path.join(tmpdirname, 'maui_weights.h5'))
-        assert os.path.isfile(os.path.join(tmpdirname, 'maui_args.json'))
+        assert os.path.isfile(os.path.join(tmpdirname, "maui_weights.h5"))
+        assert os.path.isfile(os.path.join(tmpdirname, "maui_args.json"))
 
 
 def test_maui_can_load_from_folder():
@@ -529,12 +546,14 @@ def test_maui_can_load_from_folder():
         maui_model_from_disk = Maui.load(tmpdirname)
 
     assert maui_model_from_disk.n_latent == maui_model.n_latent
-    assert np.allclose(maui_model.vae.get_weights()[0],
-        maui_model_from_disk.vae.get_weights()[0])
+    assert np.allclose(
+        maui_model.vae.get_weights()[0], maui_model_from_disk.vae.get_weights()[0]
+    )
     assert np.allclose(
         maui_model.transform({"d1": df1, "d2": df2}),
-        maui_model_from_disk.transform({"d1": df1, "d2": df2})
-        )
+        maui_model_from_disk.transform({"d1": df1, "d2": df2}),
+    )
+
 
 def test_maui_can_print_verbose_training(capsys):
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
@@ -549,6 +568,7 @@ def test_maui_can_print_verbose_training(capsys):
     stdout, stderr = capsys.readouterr()
     assert "Epoch" in stdout
 
+
 def test_maui_model_makes_2_layer_vae():
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1, input_dim=10)
     layers_names = [l.name for l in maui_model.vae.layers]
@@ -560,6 +580,7 @@ def test_maui_model_makes_2_layer_vae():
 
     assert "decode_hidden_1" not in layers_names
 
+
 def test_maui_model_makes_one_layer_vae():
     maui_model = Maui(n_hidden=[], n_latent=2, epochs=1, input_dim=10)
     layers_names = [l.name for l in maui_model.vae.layers]
@@ -568,8 +589,11 @@ def test_maui_model_makes_one_layer_vae():
 
     assert layers_names[-1] == "reconstruction"
 
-    assert not any("decode_hidden" in name for name in layers_names), "Has a decode hidden..."
+    assert not any(
+        "decode_hidden" in name for name in layers_names
+    ), "Has a decode hidden..."
     assert not any("hidden_dim" in name for name in layers_names), "Has a hidden dim..."
+
 
 def test_maui_model_validates_feature_names_on_predict_after_fit():
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
@@ -577,10 +601,11 @@ def test_maui_model_validates_feature_names_on_predict_after_fit():
 
     z = maui_model.transform({"d1": df1, "d2": df2})
 
-    df1_wrong_features = df1.reindex(df1.index[:len(df1.index)-1])
+    df1_wrong_features = df1.reindex(df1.index[: len(df1.index) - 1])
     with pytest.raises(ValueError):
         z = maui_model.transform({"df1": df1_wrong_features, "df2": df2})
-    
+
+
 def test_maui_model_saves_feature_names_to_disk():
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
     maui_model = maui_model.fit({"d1": df1, "d2": df2})
@@ -588,6 +613,7 @@ def test_maui_model_saves_feature_names_to_disk():
         maui_model.save(tmpdirname)
         maui_model_from_disk = Maui.load(tmpdirname)
     assert maui_model.feature_names == maui_model_from_disk.feature_names
+
 
 def test_maui_model_loads_model_without_feature_names_from_disk_and_warns():
     maui_model = Maui(n_hidden=[10], n_latent=2, epochs=1)
@@ -599,15 +625,17 @@ def test_maui_model_loads_model_without_feature_names_from_disk_and_warns():
             maui_model_from_disk = Maui.load(tmpdirname)
         assert maui_model_from_disk.feature_names is None
 
+
 def test_maui_can_fine_tune():
     maui_model = Maui(n_hidden=[], n_latent=2, epochs=1)
     maui_model = maui_model.fit({"d1": df1, "d2": df2})
     maui_model.fine_tune({"d1": df1, "d2": df2}, epochs=1)
 
+
 def test_maui_complains_if_fine_tune_with_wrong_features():
     maui_model = Maui(n_hidden=[], n_latent=2, epochs=1)
     maui_model.fit({"d1": df1, "d2": df2})
 
-    df1_wrong_features = df1.reindex(df1.index[:len(df1.index)-1])
+    df1_wrong_features = df1.reindex(df1.index[: len(df1.index) - 1])
     with pytest.raises(ValueError):
         z = maui_model.fine_tune({"df1": df1_wrong_features, "df2": df2})
