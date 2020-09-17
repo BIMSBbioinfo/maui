@@ -669,8 +669,8 @@ class Maui(BaseEstimator):
                 outfile.write(fn)
                 outfile.write("\n")
 
-    @staticmethod
-    def load(directory):
+    @classmethod
+    def load(cls, directory):
         """Load a maui model from disk, which was previously saved using ``save()``
 
         Parameters
@@ -688,7 +688,7 @@ class Maui(BaseEstimator):
 
         with open(os.path.join(directory, "maui_args.json"), "rt") as infile:
             init_args = json.load(infile)
-        maui_model = Maui(**init_args)
+        maui_model = cls(**init_args)
         maui_model.vae.load_weights(os.path.join(directory, "maui_weights.h5"))
         if os.path.isfile(os.path.join(directory, "maui_feature_names.txt")):
             with open(
