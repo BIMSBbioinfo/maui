@@ -119,6 +119,7 @@ def test_correlate_factors_and_features():
 
 
 def test_compute_roc():
+    np.random.seed(0)
     dummy_z = pd.DataFrame(
         [
             [0, 1, 1, 1, 0, 1, 1, 0, 0],

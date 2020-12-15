@@ -247,7 +247,7 @@ class Maui(BaseEstimator):
         max_beta_val=1,
         learning_rate=0.0005,
         verbose=0,
-        **kwargs
+        **kwargs,
     ):
         """Fine-tune autoencoder model. This is meant to be used with a pre-trained model.
 
@@ -269,7 +269,9 @@ class Maui(BaseEstimator):
         self : Maui object
         """
         if not hasattr(self, "vae"):
-            raise Exception("Cannot call fine_tune() on a model that hasn't been trained yet!")
+            raise Exception(
+                "Cannot call fine_tune() on a model that hasn't been trained yet!"
+            )
         x_ = self._dict2array(X)
         self._validate_indices(x_)
         self.x_ = x_
@@ -290,7 +292,6 @@ class Maui(BaseEstimator):
         )
         self.hist = pd.DataFrame(hist.history)
         return self
-
 
     def cluster(
         self,
@@ -727,8 +728,13 @@ class Maui(BaseEstimator):
         self._validate_X(X)
         new_feature_names = [f"{k}: {c}" for k in sorted(X.keys()) for c in X[k].index]
         sample_names = X[list(X.keys())[0]].columns
-        return pd.DataFrame(
+        ret = pd.DataFrame(
             np.vstack([X[k] for k in sorted(X.keys())]).T,
             index=sample_names,
             columns=new_feature_names,
         )
+        if self.feature_names is not None:
+            if set(self.feature_names) != set(ret.columns):
+                raise ValueError("Feature mismatch!")
+            ret = ret.loc[:, self.feature_names]
+        return ret
