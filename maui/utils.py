@@ -91,6 +91,28 @@ def merge_factors(
     new_z = pd.concat([new_z] + new_factors, axis=1)
     return new_z
 
+def r2_score_factors(z, x):
+    """Calculate R^2 of a linear model predicting features x from
+    latent factors z.
+
+    Parameters
+    ----------
+    z:  (n_samples, n_factors) DataFrame of latent factor values, output of a maui model
+    x:  (n_samples, n_features) DataFrame of concatenated multi-omics data
+
+    Returns
+    -------
+    scores: (n_factors,) Series of R^2 scores for each latent factor in `z`
+            obtained from fitting a linear model predicting `x` from that latent
+            factor alone.
+    """
+    scores = list()
+    for i in range(z.shape[1]):
+        regressor = LinearRegression()
+        regressor.fit(z.values[:, i].reshape(-1, 1), scale(x).T)
+        scores.append(regressor.score(z.values[:, i].reshape(-1, 1), scale(x).T))
+    return scores
+
 
 def filter_factors_by_r2(z, x, threshold=0.02):
     """Filter latent factors by the R^2 of a linear model predicting features x
@@ -108,11 +130,7 @@ def filter_factors_by_r2(z, x, threshold=0.02):
                 above the threshold when using that column as an input
                 to a linear model predicting `x`.
     """
-    scores = list()
-    for i in range(z.shape[1]):
-        regressor = LinearRegression()
-        regressor.fit(z.values[:, i].reshape(-1, 1), scale(x).T)
-        scores.append(regressor.score(z.values[:, i].reshape(-1, 1), scale(x).T))
+    scores = r2_score_factors(z, x)
     return z.iloc[:, pd.Series(scores)[pd.Series(scores) > threshold].index]
 
 
