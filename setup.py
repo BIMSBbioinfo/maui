@@ -21,7 +21,7 @@ setup(
         "pytest",
         "numpy>=1.18.2",
         "pandas>=1.0.3",
-        "scipy==1.2.1",
+        "scipy==1.10.0",
         "scikit-learn",
         "keras",
         "tensorflow<2.0",
